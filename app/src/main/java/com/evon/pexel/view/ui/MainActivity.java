@@ -14,7 +14,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        ActivityUtil.pushFragment(new ListFragment(), getSupportFragmentManager(), R.id.main_container, false, AnimationType.NONE);
+        ActivityUtil.pushFragment(new ListFragment(), getSupportFragmentManager(), R.id.container, false, AnimationType.NONE);
 
     }
 }

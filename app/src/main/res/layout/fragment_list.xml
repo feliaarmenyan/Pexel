@@ -7,7 +7,9 @@
         android:id="@+id/fragment_list_linearLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:gravity="center"
+        >
 
         <EditText
             android:id="@+id/fragment_list_editText"
@@ -37,6 +39,7 @@
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/fragment_list_recyclerView"
+                android:clipChildren="false"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
         </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

@@ -4,6 +4,7 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.core.view.ViewCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -37,7 +38,11 @@ public class PaginationAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         ItemPaginationBinding binding = DataBindingUtil.inflate(inflater, R.layout.item_pagination, parent, false);
+//        View cell = inflater.inflate(R.layout.item_pagination, parent, false);
+//        return new ItemViewHolder(cell);
         return new ItemViewHolder(binding);
+
+
     }
 
     public void addItems(List<PaginationItem> items) {
@@ -52,7 +57,16 @@ public class PaginationAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         ((ItemViewHolder) holder).bind(items.get(position));
+        ViewCompat.setTransitionName(((ItemViewHolder) holder).mBinding.photoImage, "Item" + position);
+        ((ItemViewHolder) holder).mBinding.photoImage.setImageResource(R.drawable.ic_profile_5);
         ((ItemViewHolder) holder).mBinding.itemPagingConstraint.setOnClickListener(view -> onRecyclerItemClickListener.onItemClicked(((ItemViewHolder) holder).mBinding.itemPagingConstraint, items.get(position), position));
+        ((ItemViewHolder) holder).mBinding.itemPagingFavorite.setOnClickListener(view -> onRecyclerItemClickListener.onItemClicked(((ItemViewHolder) holder).mBinding.itemPagingFavorite, items.get(position), position));
+        ((ItemViewHolder) holder).mBinding.itemPagingDownload.setOnClickListener(view -> onRecyclerItemClickListener.onItemClicked(((ItemViewHolder) holder).mBinding.itemPagingDownload, items.get(position), position));
+        ((ItemViewHolder) holder).mBinding.itemPagingShare.setOnClickListener(view -> onRecyclerItemClickListener.onItemClicked(((ItemViewHolder) holder).mBinding.itemPagingShare, items.get(position), position));
+        ((ItemViewHolder) holder).mBinding.photoImage.setOnClickListener(view -> onRecyclerItemClickListener.onItemClicked(((ItemViewHolder) holder).mBinding.photoImage, items.get(position), position));
+
+
+
     }
 
     @Override
@@ -60,26 +74,16 @@ public class PaginationAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         return items.size();
     }
 
-    private static class ItemViewHolder extends RecyclerView.ViewHolder {
-
+    public static class ItemViewHolder extends RecyclerView.ViewHolder {
         private ItemPaginationBinding mBinding;
-
-        ItemViewHolder(@NonNull ItemPaginationBinding binding) {
+        public ItemViewHolder(@NonNull ItemPaginationBinding binding) {
             super(binding.getRoot());
-            this.mBinding = binding;
+            mBinding = binding;
         }
-//        public ShipmentActivityHolder(@NonNull ItemPaginationBinding binding) {
-//            super(binding.getRoot());
-//            this.binding = binding;
-//        }
-//        static ItemViewHolder create(ViewGroup parent) {
-//            return new ItemViewHolder(
-//                    LayoutInflater.from(parent.getContext()).inflate(R.layout.item_pagination, parent, false));
-//        }
 
         void bind(PaginationItem paginationItem) {
-            mBinding.itemPagingCircleImage.setImageResource(paginationItem.getProfileCircleImage());
-            mBinding.itemPagingImageView.setImageResource(paginationItem.getImage());
+//            mBinding.itemPagingCircleImage.setImageResource(paginationItem.getProfileCircleImage());
+//            mBinding.imageView.setImageResource(paginationItem.getImage());
         }
     }
 }

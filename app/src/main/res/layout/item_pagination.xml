@@ -5,14 +5,15 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/item_paging_constraint"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:clipToPadding="false"
+        android:layout_height="wrap_content"
+        >
 
         <ImageView
-            android:id="@+id/item_paging_imageView"
+            android:id="@+id/photo_image"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:scaleType="centerCrop"
-            android:src="@drawable/ic_profile_5"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -50,7 +51,7 @@
             android:src="@drawable/ic_favorite"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/item_paging_imageView" />
+            app:layout_constraintTop_toBottomOf="@+id/photo_image" />
 
         <de.hdodenhof.circleimageview.CircleImageView
             android:id="@+id/item_paging_circleImage"
@@ -62,7 +63,7 @@
             android:src="@mipmap/ic_launcher"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/item_paging_imageView" />
+            app:layout_constraintTop_toBottomOf="@+id/photo_image" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
