@@ -1,5 +1,6 @@
 package com.evon.pexel.view.ui;
 
+import android.app.SharedElementCallback;
 import android.os.Bundle;
 import android.transition.TransitionInflater;
 import android.view.LayoutInflater;
@@ -14,6 +15,9 @@ import androidx.fragment.app.Fragment;
 
 import com.evon.pexel.R;
 import com.evon.pexel.databinding.FragmentItemBinding;
+
+import java.util.List;
+import java.util.Map;
 
 public class ItemFragment extends Fragment {
     private Object mObject;
@@ -49,5 +53,26 @@ public class ItemFragment extends Fragment {
         mBinding.imageView.setTransitionName("image");
         mBinding.imageView.setImageResource(R.drawable.ic_profile_5);
         mBinding.phoneNumberToolbar.setOnClickListener(view1 -> requireActivity().onBackPressed());
+        setEnterSharedElementCallback(
+                new SharedElementCallback() {
+                    @Override
+                    public void onMapSharedElements(
+                            List<String> names, Map<String, View> sharedElements) {
+                        // Locate the image view at the primary fragment (the ImageFragment
+                        // that is currently visible). To locate the fragment, call
+                        // instantiateItem with the selection position.
+                        // At this stage, the method will simply return the fragment at the
+                        // position and will not create a new one.
+                        Fragment currentFragment = (Fragment) view.getAdapter()
+                                .instantiateItem(view, MainActivity.currentPosition);
+                        View view1 = currentFragment.getView();
+                        if (view1 == null) {
+                            return;
+                        }
+
+                        // Map the first shared element name to the child ImageView.
+                        sharedElements.put(names.get(0), view1.findViewById(R.id.imageView));
+                    }
+                });
     }
 }

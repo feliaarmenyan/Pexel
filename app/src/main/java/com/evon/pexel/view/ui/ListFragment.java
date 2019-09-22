@@ -1,5 +1,6 @@
 package com.evon.pexel.view.ui;
 
+import android.app.SharedElementCallback;
 import android.content.Intent;
 import android.os.Bundle;
 import android.transition.Fade;
@@ -24,6 +25,7 @@ import com.evon.pexel.view.adapter.PaginationAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Single;
@@ -56,18 +58,14 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
         paginationAdapter = new PaginationAdapter(this);
         layoutManager = new LinearLayoutManager(requireContext());
         layoutManager.setOrientation(RecyclerView.VERTICAL);
-//        if (savedInstanceState != null) {
-//            binding.fragmentListRecyclerView.getLayoutManager().onRestoreInstanceState(
-//                    savedInstanceState.getParcelable("KEY_LAYOUT"));
-//        }else{
         binding.fragmentListRecyclerView.setLayoutManager(layoutManager);
         binding.fragmentListRecyclerView.setAdapter(paginationAdapter);
         binding.fragmentListRecyclerView.setLayoutManager(new GridLayoutManager(getContext(), 1));
-//        }
         setUpLoadMoreListener();
         subscribeForData();
         return binding.getRoot();
     }
+
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
@@ -77,6 +75,24 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
             layoutManager.getInitialPrefetchItemCount();
             binding.fragmentListSwipeRefresh.postDelayed(() -> binding.fragmentListSwipeRefresh.setRefreshing(false), 500);
         });
+        setExitSharedElementCallback(
+                new SharedElementCallback() {
+                    @Override
+                    public void onMapSharedElements(
+                            List<String> names, Map<String, View> sharedElements) {
+                        // Locate the ViewHolder for the clicked position.
+                        RecyclerView.ViewHolder selectedViewHolder = binding.fragmentListRecyclerView
+                                .findViewHolderForAdapterPosition(MainActivity.currentPosition);
+                        if (selectedViewHolder == null || selectedViewHolder.itemView == null) {
+                            return;
+                        }
+
+                        // Map the first shared element name to the child ImageView.
+                        sharedElements
+                                .put(names.get(0),
+                                        selectedViewHolder.itemView.findViewById(R.id.photo_image));
+                    }
+                });
     }
 //        binding.fragmentListRecyclerView.addOnLayoutChangeListener(
 //                new View.OnLayoutChangeListener() {
@@ -207,6 +223,7 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
 //                            selectedViewHolder.itemView.findViewById(R.id.card_image));
 //        }
 //    });
+
     @Override
     public void onItemClicked(View view, Object item, int position) {
         switch (view.getId()) {
