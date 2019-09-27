@@ -2,4 +2,5 @@
     <string name="app_name">Pexel</string>
     <string name="search_editText_hint">Please enter a text..</string>
     <string name="back">Back</string>
+    <string name="title_activity_splash">SplashActivity</string>
 </resources>

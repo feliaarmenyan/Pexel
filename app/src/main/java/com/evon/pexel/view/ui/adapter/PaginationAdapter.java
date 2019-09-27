@@ -1,4 +1,4 @@
-package com.evon.pexel.view.adapter;
+package com.evon.pexel.view.ui.adapter;
 
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -38,21 +38,13 @@ public class PaginationAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         ItemPaginationBinding binding = DataBindingUtil.inflate(inflater, R.layout.item_pagination, parent, false);
-//        View cell = inflater.inflate(R.layout.item_pagination, parent, false);
-//        return new ItemViewHolder(cell);
         return new ItemViewHolder(binding);
-
-
     }
 
     public void addItems(List<PaginationItem> items) {
         this.items.addAll(items);
     }
-//
-//    @Override
-//    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-//        return ItemViewHolder.create(parent);
-//    }
+
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
@@ -64,9 +56,6 @@ public class PaginationAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         ((ItemViewHolder) holder).mBinding.itemPagingDownload.setOnClickListener(view -> onRecyclerItemClickListener.onItemClicked(((ItemViewHolder) holder).mBinding.itemPagingDownload, items.get(position), position));
         ((ItemViewHolder) holder).mBinding.itemPagingShare.setOnClickListener(view -> onRecyclerItemClickListener.onItemClicked(((ItemViewHolder) holder).mBinding.itemPagingShare, items.get(position), position));
         ((ItemViewHolder) holder).mBinding.photoImage.setOnClickListener(view -> onRecyclerItemClickListener.onItemClicked(((ItemViewHolder) holder).mBinding.photoImage, items.get(position), position));
-
-
-
     }
 
     @Override
@@ -76,6 +65,7 @@ public class PaginationAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
 
     public static class ItemViewHolder extends RecyclerView.ViewHolder {
         private ItemPaginationBinding mBinding;
+
         public ItemViewHolder(@NonNull ItemPaginationBinding binding) {
             super(binding.getRoot());
             mBinding = binding;

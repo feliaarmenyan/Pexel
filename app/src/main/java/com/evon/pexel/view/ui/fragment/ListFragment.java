@@ -1,13 +1,10 @@
-package com.evon.pexel.view.ui;
+package com.evon.pexel.view.ui.fragment;
 
-import android.app.SharedElementCallback;
-import android.content.Intent;
 import android.os.Bundle;
 import android.transition.Fade;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -21,11 +18,11 @@ import com.evon.pexel.PaginationItem;
 import com.evon.pexel.R;
 import com.evon.pexel.base.interfaces.OnRecyclerItemClickListener;
 import com.evon.pexel.databinding.FragmentListBinding;
-import com.evon.pexel.view.adapter.PaginationAdapter;
+import com.evon.pexel.view.ui.DetailsTransition;
+import com.evon.pexel.view.ui.adapter.PaginationAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Single;
@@ -49,18 +46,14 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
     private int lastVisibleItem, totalItemCount;
     private LinearLayoutManager layoutManager;
 
+    private int mPosition;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_list, container, false);
-        paginationAdapter = new PaginationAdapter(this);
-        layoutManager = new LinearLayoutManager(requireContext());
-        layoutManager.setOrientation(RecyclerView.VERTICAL);
-        binding.fragmentListRecyclerView.setLayoutManager(layoutManager);
-        binding.fragmentListRecyclerView.setAdapter(paginationAdapter);
-        binding.fragmentListRecyclerView.setLayoutManager(new GridLayoutManager(getContext(), 1));
         setUpLoadMoreListener();
         subscribeForData();
         return binding.getRoot();
@@ -70,63 +63,18 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        paginationAdapter = new PaginationAdapter(this);
+        layoutManager = new LinearLayoutManager(requireContext());
+        layoutManager.setOrientation(RecyclerView.VERTICAL);
+        binding.fragmentListRecyclerView.setLayoutManager(layoutManager);
         binding.fragmentListRecyclerView.setAdapter(paginationAdapter);
+        binding.fragmentListRecyclerView.setLayoutManager(new GridLayoutManager(getContext(), 1));
         binding.fragmentListSwipeRefresh.setOnRefreshListener(() -> {
             layoutManager.getInitialPrefetchItemCount();
             binding.fragmentListSwipeRefresh.postDelayed(() -> binding.fragmentListSwipeRefresh.setRefreshing(false), 500);
         });
-        setExitSharedElementCallback(
-                new SharedElementCallback() {
-                    @Override
-                    public void onMapSharedElements(
-                            List<String> names, Map<String, View> sharedElements) {
-                        // Locate the ViewHolder for the clicked position.
-                        RecyclerView.ViewHolder selectedViewHolder = binding.fragmentListRecyclerView
-                                .findViewHolderForAdapterPosition(MainActivity.currentPosition);
-                        if (selectedViewHolder == null || selectedViewHolder.itemView == null) {
-                            return;
-                        }
-
-                        // Map the first shared element name to the child ImageView.
-                        sharedElements
-                                .put(names.get(0),
-                                        selectedViewHolder.itemView.findViewById(R.id.photo_image));
-                    }
-                });
     }
-//        binding.fragmentListRecyclerView.addOnLayoutChangeListener(
-//                new View.OnLayoutChangeListener() {
-//                    @Override
-//                    public void onLayoutChange(View view,
-//                                               int left,
-//                                               int top,
-//                                               int right,
-//                                               int bottom,
-//                                               int oldLeft,
-//                                               int oldTop,
-//                                               int oldRight,
-//                                               int oldBottom) {
-//                        binding.fragmentListRecyclerView.removeOnLayoutChangeListener(this);
-//                        final RecyclerView.LayoutManager layoutManager =
-//                                binding.fragmentListRecyclerView.getLayoutManager();
-//                        View viewAtPosition =
-//                                layoutManager.findViewByPosition(layoutManager.getPosition(view));
-//                        // Scroll to position if the view for the current position is null (not
-//                        // currently part of layout manager children), or it's not completely
-//                        // visible.
-//                        if (viewAtPosition == null
-//                                || layoutManager.isViewPartiallyVisible(viewAtPosition, false, true)){
-//                            binding.fragmentListRecyclerView.post(()
-//                                    -> layoutManager.scrollToPosition(layoutManager.getPosition(view)));
-//                        }
-//                    }
-//                });
-//    }
-//    @Override
-//    public void onSaveInstanceState(@NonNull Bundle outState) {
-//        super.onSaveInstanceState(outState);
-//        outState.putParcelable("KEY_LAYOUT", binding.fragmentListRecyclerView.getLayoutManager().onSaveInstanceState());
-//    }
+
 
     @Override
     public void onDestroy() {
@@ -205,31 +153,13 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
                 });
     }
 
-    //   public void setExitSharedElementCallback(
-//   new SharedElementCallback() {
-//        @Override
-//        public void onMapSharedElements(
-//                List<String> names, Map<String, View> sharedElements) {
-//            // Locate the ViewHolder for the clicked position.
-//            RecyclerView.ViewHolder selectedViewHolder = recyclerView
-//                    .findViewHolderForAdapterPosition(MainActivity.currentPosition);
-//            if (selectedViewHolder == null || selectedViewHolder.itemView == null) {
-//                return;
-//            }
-//
-//            // Map the first shared element name to the child ImageView.
-//            sharedElements
-//                    .put(names.get(0),
-//                            selectedViewHolder.itemView.findViewById(R.id.card_image));
-//        }
-//    });
-
     @Override
     public void onItemClicked(View view, Object item, int position) {
         switch (view.getId()) {
             case R.id.photo_image:
                 ItemFragment listFragment = ItemFragment.newInstance();
 
+                mPosition = position;
                 listFragment.setSharedElementEnterTransition(new DetailsTransition());
                 listFragment.setEnterTransition(new Fade());
                 setExitTransition(new Fade());
@@ -237,40 +167,25 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
 
                 requireFragmentManager()
                         .beginTransaction()
-//                        .setReorderingAllowed(true) // setAllowOptimization before 26.1.0
                         .addSharedElement(view, "image")
-//                        .add(R.id.container, listFragment)
-                        .addToBackStack(null)
                         .replace(R.id.container, listFragment)
+                        .addToBackStack(null)
                         .commit();
+                break;
 
-//                   .beginTransaction()
-//                    .addToBackStack(TAG)
-//                    .replace(R.id.content, galleryViewPagerFragment)
-//                    .commit();
 
-//               requireFragmentManager()
-//                        .beginTransaction()
-//                        .setReorderingAllowed(true) // setAllowOptimization before 26.1.0
-//                        .addSharedElement(view, "image")
-//                        .replace(R.id.container,
-//                                new ListFragment(),
-//                                ListFragment.class.getSimpleName())
-//                        .addToBackStack(null)
-//                        .commit();
-                break;
-            case R.id.item_paging_favorite:
-                Toast.makeText(requireContext(), "Favorite", Toast.LENGTH_SHORT).show();
-                break;
-            case R.id.item_paging_share:
-                Intent sendIntent = new Intent();
-                sendIntent.setAction(Intent.ACTION_SEND);
-                sendIntent.putExtra(Intent.EXTRA_TEXT, "heey");
-                sendIntent.setType("text/plain");
-                startActivity(sendIntent);
-                break;
-            case R.id.item_paging_download:
-                Toast.makeText(requireContext(), "Download", Toast.LENGTH_SHORT).show();
+//            case R.id.item_paging_favorite:
+//                Toast.makeText(requireContext(), "Favorite", Toast.LENGTH_SHORT).show();
+//                break;
+//            case R.id.item_paging_share:
+//                Intent sendIntent = new Intent();
+//                sendIntent.setAction(Intent.ACTION_SEND);
+//                sendIntent.putExtra(Intent.EXTRA_TEXT, "heey");
+//                sendIntent.setType("text/plain");
+//                startActivity(sendIntent);
+//                break;
+//            case R.id.item_paging_download:
+//                Toast.makeText(requireContext(), "Download", Toast.LENGTH_SHORT).show();
         }
     }
 }
