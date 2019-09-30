@@ -4,10 +4,13 @@
     <color name="colorPrimaryDark">#034D59</color>
     <color name="colorAccent">#4CC82A </color>
 
-
+    <color name="colorHint">#A0A6AE</color>
     <color name="colorWhite">#ffffff</color>
     <color name="colorBlack">#000000</color>
     <color name="colorGreen100">#015664</color>
     <color name="colorGreen80">#116F7F</color>
+    <color name="colorBlack90">#1E1E1E</color>
+    <color name="colorLineDark">#AEAEAE</color>
+    <color name="colorLineLite">#D1D4D8</color>
 
 </resources>

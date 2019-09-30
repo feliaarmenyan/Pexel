@@ -1,6 +1,16 @@
 <resources>
     <string name="app_name">Pexel</string>
     <string name="search_editText_hint">Please enter a text..</string>
+
+
     <string name="back">Back</string>
     <string name="title_activity_splash">SplashActivity</string>
+    <string name="favorite">Favorite</string>
+    <string name="search">Search</string>
+    <string name="chooseASize">Choose a size</string>
+    <string name="original">Original (3984 x 2656)</string>
+    <string name="large">Large (1920 x 1280)</string>
+    <string name="medium">Medium (1280 x 853)</string>
+    <string name="small">Small (640 x 426)</string>
+    <string name="download">Download</string>
 </resources>

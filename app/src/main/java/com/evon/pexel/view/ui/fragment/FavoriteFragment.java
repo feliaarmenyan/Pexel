@@ -1,17 +1,14 @@
 package com.evon.pexel.view.ui.fragment;
 
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.transition.Fade;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
@@ -23,13 +20,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.evon.pexel.PaginationItem;
 import com.evon.pexel.R;
 import com.evon.pexel.base.interfaces.OnRecyclerItemClickListener;
-import com.evon.pexel.databinding.FragmentListBinding;
-import com.evon.pexel.model.def.AnimationType;
-import com.evon.pexel.utils.ActivityUtil;
+import com.evon.pexel.databinding.FragmentFavoriteBinding;
 import com.evon.pexel.view.ui.DetailsTransition;
 import com.evon.pexel.view.ui.activity.MainActivity;
 import com.evon.pexel.view.ui.adapter.PaginationAdapter;
-import com.google.android.material.bottomsheet.BottomSheetBehavior;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,11 +36,12 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.processors.PublishProcessor;
 import io.reactivex.schedulers.Schedulers;
 
-public class ListFragment extends Fragment implements OnRecyclerItemClickListener {
+public class FavoriteFragment extends Fragment implements OnRecyclerItemClickListener {
 
-    private FragmentListBinding binding;
+    private FragmentFavoriteBinding mBinding;
 
-    public static final String TAG = ListFragment.class.getSimpleName();
+
+    public static final String TAG = FavoriteFragment.class.getSimpleName();
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
     private PublishProcessor<Integer> paginator = PublishProcessor.create();
     private PaginationAdapter paginationAdapter;
@@ -63,10 +58,10 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
                              Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
-        binding = DataBindingUtil.inflate(inflater, R.layout.fragment_list, container, false);
+        mBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_favorite, container, false);
         setUpLoadMoreListener();
         subscribeForData();
-        return binding.getRoot();
+        return mBinding.getRoot();
     }
 
 
@@ -77,49 +72,15 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
         paginationAdapter = new PaginationAdapter(this);
         layoutManager = new LinearLayoutManager(requireContext());
         layoutManager.setOrientation(RecyclerView.VERTICAL);
-        binding.fragmentListRecyclerView.setLayoutManager(layoutManager);
-        binding.fragmentListRecyclerView.setAdapter(paginationAdapter);
-        binding.fragmentListRecyclerView.setLayoutManager(new GridLayoutManager(getContext(), 1));
-        binding.fragmentListSwipeRefresh.setOnRefreshListener(() -> {
+        mBinding.fragmentFavoriteRecyclerView.setLayoutManager(layoutManager);
+        mBinding.fragmentFavoriteRecyclerView.setAdapter(paginationAdapter);
+        mBinding.fragmentFavoriteRecyclerView.setLayoutManager(new GridLayoutManager(getContext(), 1));
+        mBinding.fragmentFavoriteSwipeRefresh.setOnRefreshListener(() -> {
             layoutManager.getInitialPrefetchItemCount();
-            binding.fragmentListSwipeRefresh.postDelayed(() -> binding.fragmentListSwipeRefresh.setRefreshing(false), 500);
+            mBinding.fragmentFavoriteSwipeRefresh.postDelayed(() -> mBinding.fragmentFavoriteSwipeRefresh.setRefreshing(false), 500);
         });
-        binding.fragmentListToolbarSearchIcon.setOnClickListener(v -> {
-            binding.fragmentListToolbarLinearLayout.setVisibility(View.GONE);
-            binding.fragmentListToolbarEditTextLinearLayout.setVisibility(View.VISIBLE);
-        });
-        binding.fragmentListToolbarEditTextBack.setOnClickListener(v -> {
-            binding.fragmentListToolbarLinearLayout.setVisibility(View.VISIBLE);
-            binding.fragmentListToolbarEditTextLinearLayout.setVisibility(View.GONE);
-            binding.fragmentListToolbarEditText.getText().clear();
-            final InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
-        });
-        binding.fragmentListToolbarEditTextClose.setOnClickListener(view1 -> binding.fragmentListToolbarEditText.getText().clear());
-        binding.fragmentListToolbarFavoriteIcon.setOnClickListener(v -> ActivityUtil.pushFragment(new FavoriteFragment(), requireFragmentManager(), R.id.main_content, true, AnimationType.RIGHT_TO_LEFT));
-        binding.fragmentListToolbarEditText.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                binding.fragmentListToolbarEditTextClose.setVisibility(View.GONE);
-            }
-
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                if (binding.fragmentListToolbarEditText.getText().toString().equals("")) {
-                    binding.fragmentListToolbarEditTextClose.setVisibility(View.GONE);
-                } else {
-                    binding.fragmentListToolbarEditTextClose.setVisibility(View.VISIBLE);
-                }
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) {
-
-            }
-        });
-
+        mBinding.favoriteToolbar.setNavigationOnClickListener(v -> requireActivity().onBackPressed());
     }
-
 
 
     @Override
@@ -132,7 +93,7 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
      * setting listener to get callback for load more
      */
     private void setUpLoadMoreListener() {
-        binding.fragmentListRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+        mBinding.fragmentFavoriteRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(RecyclerView recyclerView,
                                    int dx, int dy) {
@@ -160,7 +121,7 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
                 .onBackpressureDrop()
                 .doOnNext(page -> {
                     loading = true;
-                    binding.fragmentListProgressBar.setVisibility(View.VISIBLE);
+                    mBinding.fragmentFavoriteProgressBar.setVisibility(View.VISIBLE);
                 })
                 .concatMapSingle(page -> dataFromNetwork(page)
                         .subscribeOn(Schedulers.io())
@@ -172,7 +133,7 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
                     paginationAdapter.addItems(items);
                     paginationAdapter.notifyDataSetChanged();
                     loading = false;
-                    binding.fragmentListProgressBar.setVisibility(View.INVISIBLE);
+                    mBinding.fragmentFavoriteProgressBar.setVisibility(View.INVISIBLE);
                 });
 
         compositeDisposable.add(disposable);
@@ -191,7 +152,7 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
                     List<PaginationItem> items = new ArrayList<>();
                     for (int i = 1; i <= 10; i++) {
                         PaginationItem item = new PaginationItem();
-                        item.setImage(R.drawable.ic_profile_5);
+                        item.setImage(R.drawable.adventure4);
                         item.setProfileCircleImage(R.drawable.adventure4);
                         items.add(item);
                     }
@@ -218,8 +179,6 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
                         .addToBackStack(null)
                         .commit();
                 break;
-
-
             case R.id.item_paging_favorite:
                 Toast.makeText(requireContext(), "Favorite", Toast.LENGTH_SHORT).show();
                 break;
@@ -231,11 +190,8 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
                 startActivity(sendIntent);
                 break;
             case R.id.item_paging_download:
-                BottomSheetChooseSize bottomSheetChooseSize = new BottomSheetChooseSize();
-                bottomSheetChooseSize.show(requireFragmentManager(), bottomSheetChooseSize.getTag());
                 Toast.makeText(requireContext(), "Download", Toast.LENGTH_SHORT).show();
         }
     }
-
 
 }

@@ -14,6 +14,7 @@ import androidx.fragment.app.Fragment;
 
 import com.evon.pexel.R;
 import com.evon.pexel.databinding.FragmentItemBinding;
+import com.evon.pexel.view.ui.activity.MainActivity;
 
 public class ItemFragment extends Fragment {
     private Object mObject;
@@ -50,6 +51,8 @@ public class ItemFragment extends Fragment {
         mBinding.imageView.setTransitionName("image");
         mBinding.imageView.setImageResource(R.drawable.ic_profile_5);
         mBinding.phoneNumberToolbar.setOnClickListener(view1 -> requireActivity().onBackPressed());
+        ((MainActivity)getActivity()).updateStatusBarColor("#000000");
+
     }
 
 }
