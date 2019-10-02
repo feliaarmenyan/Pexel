@@ -39,6 +39,10 @@ public final class SizeData {
         private int mCheckIcon;
         private String mSize;
 
+        public Sizes(int checkIcon) {
+            mCheckIcon = checkIcon;
+        }
+
         Sizes(int checkIcon, String size) {
             mCheckIcon = checkIcon;
             mSize = size;

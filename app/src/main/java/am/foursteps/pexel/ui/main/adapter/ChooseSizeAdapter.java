@@ -26,6 +26,10 @@ public class ChooseSizeAdapter extends RecyclerView.Adapter<ChooseSizeAdapter.Ch
         items = new ArrayList<>();
     }
 
+    public SizeData.Sizes getItem(int position) {
+        return items.get(position);
+    }
+
     @NonNull
     @Override
     public ChooseSizeViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {

@@ -5,11 +5,14 @@ import android.os.Parcelable;
 
 import androidx.annotation.DrawableRes;
 
+import am.foursteps.pexel.data.local.def.ItemType;
+
 public class PaginationItem implements Parcelable {
     @DrawableRes
     private int  mProfileCircleImage;
     @DrawableRes
     private int  mImage;
+    private ItemType mItemType;
 
     private float progress;
 
@@ -24,6 +27,14 @@ public class PaginationItem implements Parcelable {
 
     public int getProfileCircleImage() {
         return mProfileCircleImage;
+    }
+
+    public ItemType getItemType() {
+        return mItemType;
+    }
+
+    public void setItemType(ItemType itemType) {
+        mItemType = itemType;
     }
 
     public void setProfileCircleImage(int profileCircleImage) {

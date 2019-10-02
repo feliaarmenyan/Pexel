@@ -2,7 +2,6 @@ package am.foursteps.pexel.ui.main.fragment;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.transition.Fade;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,22 +15,18 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.bottomsheet.BottomSheetDialog;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import am.foursteps.pexel.R;
-import am.foursteps.pexel.data.local.SizeData;
 import am.foursteps.pexel.data.local.model.PaginationItem;
-import am.foursteps.pexel.databinding.BottomSheetBinding;
 import am.foursteps.pexel.databinding.FragmentFavoriteListBinding;
 import am.foursteps.pexel.ui.base.interfaces.OnRecyclerItemClickListener;
+import am.foursteps.pexel.ui.base.util.BottomSheetSizeHelper;
+import am.foursteps.pexel.ui.base.util.PhotoFullScreenHelper;
 import am.foursteps.pexel.ui.main.activity.MainActivity;
-import am.foursteps.pexel.ui.main.adapter.ChooseSizeAdapter;
 import am.foursteps.pexel.ui.main.adapter.PaginationAdapter;
-import am.foursteps.pexel.utils.DetailsTransition;
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
@@ -53,9 +48,6 @@ public class FavoriteFragment extends Fragment implements OnRecyclerItemClickLis
     private int lastVisibleItem, totalItemCount;
     private LinearLayoutManager layoutManager;
 
-    private ChooseSizeAdapter mSizeAdapter;
-
-    private int mPosition;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -128,7 +120,7 @@ public class FavoriteFragment extends Fragment implements OnRecyclerItemClickLis
                         }))
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(items -> {
-                    paginationAdapter.addItems(items);
+//                    paginationAdapter.addItems(items);
                     paginationAdapter.notifyDataSetChanged();
                     loading = false;
                     mBinding.fragmentFavoriteProgressBar.setVisibility(View.INVISIBLE);
@@ -162,23 +154,11 @@ public class FavoriteFragment extends Fragment implements OnRecyclerItemClickLis
     public void onItemClicked(View view, Object item, int position) {
         switch (view.getId()) {
             case R.id.photo_image:
-                ItemFragment listFragment = ItemFragment.newInstance();
-
-                mPosition = position;
-                listFragment.setSharedElementEnterTransition(new DetailsTransition());
-                listFragment.setEnterTransition(new Fade());
-                setExitTransition(new Fade());
-                listFragment.setSharedElementReturnTransition(new DetailsTransition());
-
-                requireFragmentManager()
-                        .beginTransaction()
-                        .addSharedElement(view, "image")
-                        .replace(R.id.main_content, listFragment)
-                        .addToBackStack(null)
-                        .commit();
+                PhotoFullScreenHelper photoFullScreenHelper = new PhotoFullScreenHelper();
+                photoFullScreenHelper.fullScreen(requireFragmentManager(), view);
                 break;
             case R.id.item_paging_favorite:
-                Toast.makeText(requireContext(), "Favorite", Toast.LENGTH_SHORT).show();
+                paginationAdapter.updateItem(position,0);
                 break;
             case R.id.item_paging_share:
                 Intent sendIntent = new Intent();
@@ -188,17 +168,10 @@ public class FavoriteFragment extends Fragment implements OnRecyclerItemClickLis
                 startActivity(sendIntent);
                 break;
             case R.id.item_paging_download:
-                BottomSheetBinding mBinding = BottomSheetBinding.inflate(getLayoutInflater());
-                BottomSheetDialog dialog = new BottomSheetDialog(requireContext());
-                dialog.setContentView(mBinding.getRoot());
-
-                mSizeAdapter = new ChooseSizeAdapter(this);
-                mBinding.bottomSheetChooseSizeRecyclerView.setLayoutManager(new LinearLayoutManager(requireContext(), RecyclerView.VERTICAL, false));
-                mSizeAdapter.setChooseSizeList(SizeData.getInstance().getItems());
-                mBinding.bottomSheetChooseSizeRecyclerView.setAdapter(mSizeAdapter);
-
-                dialog.show();
-                mBinding.bottomSheetChooseSizeClose.setOnClickListener(view1 -> dialog.dismiss());        }
+                BottomSheetSizeHelper bottomSheetSizeHelper = new BottomSheetSizeHelper();
+                bottomSheetSizeHelper.ItemClich(getLayoutInflater(), paginationAdapter, requireContext(), position);
+                break;
+        }
     }
 
     @Override
