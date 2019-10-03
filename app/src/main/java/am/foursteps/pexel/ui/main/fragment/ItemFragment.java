@@ -12,8 +12,11 @@ import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 
+import am.foursteps.pexel.GlideApp;
 import am.foursteps.pexel.R;
+import am.foursteps.pexel.data.remote.model.ImageSrc;
 import am.foursteps.pexel.databinding.FragmentItemOfListBinding;
+import am.foursteps.pexel.ui.base.util.ImageUrlHelper;
 import am.foursteps.pexel.ui.main.activity.MainActivity;
 
 public class ItemFragment extends Fragment {
@@ -21,11 +24,13 @@ public class ItemFragment extends Fragment {
     private Object mObject;
     private ImageView mImageView;
     private ItemFragment fragment;
+    private ImageSrc src;
 
-    public static ItemFragment newInstance() {
+    public static ItemFragment newInstance(ImageSrc src) {
         Bundle args = new Bundle();
         ItemFragment fragment = new ItemFragment();
         fragment.setArguments(args);
+        fragment.src = src;
         return fragment;
     }
 
@@ -49,7 +54,16 @@ public class ItemFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         mBinding.imageView.setTransitionName("image");
-        mBinding.imageView.setImageResource(R.drawable.ic_profile_5);
+//        mBinding.imageView.setImageResource(R.drawable.adventure4);
+
+        ImageUrlHelper.ImageUrl(mBinding.imageView,src);
+//        GlideApp.with(requireContext()).load(src).into(mBinding.imageView);
+
+//        Picasso.get().load(url).into(mBinding.imageView);
+
+
+
+
         mBinding.phoneNumberToolbar.setOnClickListener(view1 -> requireActivity().onBackPressed());
         ((MainActivity) requireActivity()).updateStatusBarColor("#000000");
 

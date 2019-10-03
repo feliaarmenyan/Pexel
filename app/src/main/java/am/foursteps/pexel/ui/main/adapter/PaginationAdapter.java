@@ -1,5 +1,6 @@
 package am.foursteps.pexel.ui.main.adapter;
 
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
@@ -11,7 +12,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
-import am.foursteps.pexel.GlideApp;
 import am.foursteps.pexel.R;
 import am.foursteps.pexel.data.local.def.ItemType;
 import am.foursteps.pexel.data.remote.model.Image;
@@ -31,10 +31,17 @@ public class PaginationAdapter extends RecyclerView.Adapter<PaginationAdapter.It
     private ItemType mItemType;
     private float mprogress;
 
+
     public PaginationAdapter(OnRecyclerItemClickListener<Image> onRecyclerItemClickListener) {
         this.onRecyclerItemClickListener = onRecyclerItemClickListener;
         this.items = new ArrayList<>();
     }
+
+    public String getUrl(int pos) {
+        return items.get(pos).getUrl();
+    }
+
+
 
     public void updateItem(int position, float progress){
         Image item = this.items.get(position);
@@ -69,7 +76,6 @@ public class PaginationAdapter extends RecyclerView.Adapter<PaginationAdapter.It
     public void onBindViewHolder(@NonNull ItemViewHolder holder, int position) {
         holder.bind(items.get(position));
         ViewCompat.setTransitionName(holder.mBinding.photoImage, "Item" + position);
-
         holder.mBinding.itemPagingConstraint.setOnClickListener(view -> onRecyclerItemClickListener.onItemClicked(holder.mBinding.itemPagingConstraint, items.get(position), position));
         holder.mBinding.itemPagingFavorite.setOnClickListener(view -> onRecyclerItemClickListener.onItemClicked(holder.mBinding.itemPagingFavorite, items.get(position), position));
         holder.mBinding.itemPagingDownload.setOnClickListener(view -> onRecyclerItemClickListener.onItemClicked(holder.mBinding.itemPagingDownload, items.get(position), position));
@@ -88,6 +94,7 @@ public class PaginationAdapter extends RecyclerView.Adapter<PaginationAdapter.It
     public int getItemCount() {
         return items.size();
     }
+
 
     static class ItemViewHolder extends RecyclerView.ViewHolder {
 

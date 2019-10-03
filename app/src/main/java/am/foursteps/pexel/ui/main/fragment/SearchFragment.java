@@ -25,6 +25,8 @@ import java.util.concurrent.TimeUnit;
 
 import am.foursteps.pexel.R;
 import am.foursteps.pexel.data.local.model.PaginationItem;
+import am.foursteps.pexel.data.remote.model.Image;
+import am.foursteps.pexel.data.remote.model.ImageSrc;
 import am.foursteps.pexel.databinding.FragmentSearchListBinding;
 import am.foursteps.pexel.ui.base.interfaces.OnRecyclerItemClickListener;
 import am.foursteps.pexel.ui.base.util.BottomSheetSizeHelper;
@@ -187,7 +189,7 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
         switch (view.getId()) {
             case R.id.photo_image:
                 PhotoFullScreenHelper photoFullScreenHelper = new PhotoFullScreenHelper();
-                photoFullScreenHelper.fullScreen(requireFragmentManager(), view);
+                photoFullScreenHelper.fullScreen(requireFragmentManager(), view, ((Image) item).getSrc());
                 break;
             case R.id.item_paging_favorite:
                 paginationAdapter.updateItem(position,0);
@@ -201,7 +203,7 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
                 break;
             case R.id.item_paging_download:
                 BottomSheetSizeHelper bottomSheetSizeHelper = new BottomSheetSizeHelper();
-                bottomSheetSizeHelper.ItemClich(getLayoutInflater(), paginationAdapter, requireContext(), position);
+                bottomSheetSizeHelper.ItemClich(requireActivity(),getLayoutInflater(), paginationAdapter, requireContext(), position,((Image) item).getSrc());
                 break;
         }
     }

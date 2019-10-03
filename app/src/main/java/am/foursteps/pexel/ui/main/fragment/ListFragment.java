@@ -1,6 +1,8 @@
 package am.foursteps.pexel.ui.main.fragment;
 
+import android.Manifest;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,10 +17,14 @@ import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.nabinbhandari.android.permissions.PermissionHandler;
+import com.nabinbhandari.android.permissions.Permissions;
+
 import javax.inject.Inject;
 
 import am.foursteps.pexel.R;
 import am.foursteps.pexel.data.local.def.AnimationType;
+import am.foursteps.pexel.data.remote.model.Image;
 import am.foursteps.pexel.databinding.FragmentImageListBinding;
 import am.foursteps.pexel.factory.ViewModelFactory;
 import am.foursteps.pexel.ui.base.interfaces.OnRecyclerItemClickListener;
@@ -54,14 +60,15 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         AndroidSupportInjection.inject(this);
-        super.onCreate(savedInstanceState);
         initialiseViewModel();
+        setRetainInstance(true);
+
+        super.onCreate(savedInstanceState);
     }
 
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         bindingList = DataBindingUtil.inflate(inflater, R.layout.fragment_image_list, container, false);
         subscribeForData();
@@ -153,7 +160,7 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
         switch (view.getId()) {
             case R.id.photo_image:
                 PhotoFullScreenHelper photoFullScreenHelper = new PhotoFullScreenHelper();
-                photoFullScreenHelper.fullScreen(requireFragmentManager(), view);
+                photoFullScreenHelper.fullScreen(requireFragmentManager(), view,((Image) item).getSrc());
                 break;
             case R.id.item_paging_favorite:
                 paginationAdapter.updateItem(position, -10);
@@ -161,13 +168,18 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
             case R.id.item_paging_share:
                 Intent sendIntent = new Intent();
                 sendIntent.setAction(Intent.ACTION_SEND);
-                sendIntent.putExtra(Intent.EXTRA_TEXT, "heey");
+                sendIntent.putExtra(Intent.EXTRA_TEXT, paginationAdapter.getUrl(position));
                 sendIntent.setType("text/plain");
                 startActivity(sendIntent);
                 break;
             case R.id.item_paging_download:
-                BottomSheetSizeHelper bottomSheetSizeHelper = new BottomSheetSizeHelper();
-                bottomSheetSizeHelper.ItemClich(getLayoutInflater(), paginationAdapter, requireContext(), position);
+                String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+                Permissions.check(requireContext(), permissions, null/*rationale*/, null/*options*/, new PermissionHandler() {
+                    @Override
+                    public void onGranted() {
+                        BottomSheetSizeHelper bottomSheetSizeHelper = new BottomSheetSizeHelper();
+                        bottomSheetSizeHelper.ItemClich(requireActivity(),getLayoutInflater(), paginationAdapter, requireContext(), position,((Image) item).getSrc());                    }
+                });
                 break;
         }
     }

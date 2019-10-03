@@ -1,11 +1,14 @@
 package am.foursteps.pexel.ui.base.util;
 
+import android.net.Uri;
 import android.transition.Fade;
 import android.view.View;
 
 import androidx.fragment.app.FragmentManager;
 
 import am.foursteps.pexel.R;
+import am.foursteps.pexel.data.remote.model.Image;
+import am.foursteps.pexel.data.remote.model.ImageSrc;
 import am.foursteps.pexel.ui.main.fragment.ItemFragment;
 import am.foursteps.pexel.utils.DetailsTransition;
 
@@ -15,8 +18,8 @@ public class PhotoFullScreenHelper {
     }
 
 
-    public void fullScreen(FragmentManager fragmentManager, View view){
-        ItemFragment listFragment = ItemFragment.newInstance();
+    public void fullScreen(FragmentManager fragmentManager, View view, ImageSrc src){
+        ItemFragment listFragment = ItemFragment.newInstance(src);
         listFragment.setSharedElementEnterTransition(new DetailsTransition());
         listFragment.setEnterTransition(new Fade());
         listFragment.setExitTransition(new Fade());
