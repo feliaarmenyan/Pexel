@@ -18,7 +18,7 @@ public class RequestInterceptor implements Interceptor {
         Request originalRequest = chain.request();
 
         Request.Builder requestBuilder = originalRequest.newBuilder()
-                .header("Authorization", AppConstants.A_PEXELS_API_KEY)
+                .header("Authorization", AppConstants.O_PEXELS_API_KEY)
                 .method(originalRequest.method(), originalRequest.body());
 
         Request request = requestBuilder.build();

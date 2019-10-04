@@ -13,6 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -30,6 +31,7 @@ import am.foursteps.pexel.factory.ViewModelFactory;
 import am.foursteps.pexel.ui.base.interfaces.OnRecyclerItemClickListener;
 import am.foursteps.pexel.ui.base.util.BottomSheetSizeHelper;
 import am.foursteps.pexel.ui.base.util.PhotoFullScreenHelper;
+import am.foursteps.pexel.ui.base.util.RxBus;
 import am.foursteps.pexel.ui.main.activity.MainActivity;
 import am.foursteps.pexel.ui.main.adapter.PaginationAdapter;
 import am.foursteps.pexel.ui.main.viewmodel.MainViewModel;
@@ -160,7 +162,7 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
         switch (view.getId()) {
             case R.id.photo_image:
                 PhotoFullScreenHelper photoFullScreenHelper = new PhotoFullScreenHelper();
-                photoFullScreenHelper.fullScreen(requireFragmentManager(), view,((Image) item).getSrc());
+                photoFullScreenHelper.fullScreen(requireFragmentManager(), view, ((Image) item).getSrc());
                 break;
             case R.id.item_paging_favorite:
                 paginationAdapter.updateItem(position, -10);
@@ -178,9 +180,43 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
                     @Override
                     public void onGranted() {
                         BottomSheetSizeHelper bottomSheetSizeHelper = new BottomSheetSizeHelper();
-                        bottomSheetSizeHelper.ItemClich(requireActivity(),getLayoutInflater(), paginationAdapter, requireContext(), position,((Image) item).getSrc());                    }
+                        bottomSheetSizeHelper.ItemClich(requireActivity(), getLayoutInflater(), paginationAdapter, requireContext(), position, ((Image) item).getSrc());
+                    }
                 });
+                RxBus.getInstance().listen().subscribe(getInputObserver());
                 break;
         }
+                // Get input observer instance
+                private Observer<Integer> getInputObserver () {
+                return new Observer<Integer>() {
+                    @Override
+                    public void onChanged(Integer integer) {
+                        paginationAdapter.updateItem(position, integer);
+                    }
+
+                    @Override
+                    public void onSubscribe(Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onNext(Integer s) {
+
+
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+                };
+            }
+
+        }
     }
-}
+
