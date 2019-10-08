@@ -13,7 +13,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -37,8 +36,10 @@ import am.foursteps.pexel.ui.main.adapter.PaginationAdapter;
 import am.foursteps.pexel.ui.main.viewmodel.MainViewModel;
 import am.foursteps.pexel.utils.ActivityUtil;
 import dagger.android.support.AndroidSupportInjection;
+import io.reactivex.Observer;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Action;
 import io.reactivex.processors.PublishProcessor;
 
 public class ListFragment extends Fragment implements OnRecyclerItemClickListener {
@@ -183,26 +184,15 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
                         bottomSheetSizeHelper.ItemClich(requireActivity(), getLayoutInflater(), paginationAdapter, requireContext(), position, ((Image) item).getSrc());
                     }
                 });
-                RxBus.getInstance().listen().subscribe(getInputObserver());
-                break;
-        }
-                // Get input observer instance
-                private Observer<Integer> getInputObserver () {
-                return new Observer<Integer>() {
-                    @Override
-                    public void onChanged(Integer integer) {
-                        paginationAdapter.updateItem(position, integer);
-                    }
-
+                RxBus.getInstance().listen().subscribe(new Observer<Integer>() {
                     @Override
                     public void onSubscribe(Disposable d) {
 
                     }
 
                     @Override
-                    public void onNext(Integer s) {
-
-
+                    public void onNext(Integer integer) {
+                        paginationAdapter.updateItem(position, integer);
                     }
 
                     @Override
@@ -214,9 +204,9 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
                     public void onComplete() {
 
                     }
-                };
-            }
-
+                });
+                break;
         }
     }
+}
 

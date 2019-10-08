@@ -1,5 +1,6 @@
 package am.foursteps.pexel.ui.main.fragment;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -15,30 +16,31 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import com.nabinbhandari.android.permissions.PermissionHandler;
+import com.nabinbhandari.android.permissions.Permissions;
+
+import javax.inject.Inject;
 
 import am.foursteps.pexel.R;
-import am.foursteps.pexel.data.local.model.PaginationItem;
 import am.foursteps.pexel.data.remote.model.Image;
-import am.foursteps.pexel.data.remote.model.ImageSrc;
 import am.foursteps.pexel.databinding.FragmentSearchListBinding;
+import am.foursteps.pexel.factory.ViewModelFactory;
 import am.foursteps.pexel.ui.base.interfaces.OnRecyclerItemClickListener;
 import am.foursteps.pexel.ui.base.util.BottomSheetSizeHelper;
 import am.foursteps.pexel.ui.base.util.PhotoFullScreenHelper;
+import am.foursteps.pexel.ui.base.util.RxBus;
 import am.foursteps.pexel.ui.main.activity.MainActivity;
 import am.foursteps.pexel.ui.main.adapter.PaginationAdapter;
-import io.reactivex.Single;
-import io.reactivex.android.schedulers.AndroidSchedulers;
+import am.foursteps.pexel.ui.main.viewmodel.MainViewModel;
+import dagger.android.support.AndroidSupportInjection;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.processors.PublishProcessor;
-import io.reactivex.schedulers.Schedulers;
+import timber.log.Timber;
 
 public class SearchFragment extends Fragment implements OnRecyclerItemClickListener {
 
@@ -53,7 +55,21 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
     private final int VISIBLE_THRESHOLD = 4;
     private int lastVisibleItem, totalItemCount;
     private LinearLayoutManager layoutManager;
+    private String mSearchText;
 
+
+    @Inject
+    ViewModelFactory viewModelFactory;
+
+    private MainViewModel mMainViewModel;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        AndroidSupportInjection.inject(this);
+        initialiseViewModel();
+        setRetainInstance(true);
+        super.onCreate(savedInstanceState);
+    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -61,7 +77,6 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
 
         super.onCreate(savedInstanceState);
         mBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_search_list, container, false);
-        setUpLoadMoreListener();
         subscribeForData();
         return mBinding.getRoot();
     }
@@ -76,7 +91,8 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
         layoutManager.setOrientation(RecyclerView.VERTICAL);
         mBinding.fragmentSearchRecyclerView.setLayoutManager(layoutManager);
         mBinding.fragmentSearchRecyclerView.setAdapter(paginationAdapter);
-        mBinding.fragmentSearchRecyclerView.setLayoutManager(new GridLayoutManager(getContext(), 1));
+        setUpLoadMoreListener();
+        mMainViewModel.fetchSearchPhotoList(mSearchText, 20, pageNumber);
         mBinding.fragmentSearchSwipeRefresh.setOnRefreshListener(() -> {
             layoutManager.getInitialPrefetchItemCount();
             mBinding.fragmentSearchSwipeRefresh.postDelayed(() -> mBinding.fragmentSearchSwipeRefresh.setRefreshing(false), 500);
@@ -102,6 +118,9 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
                 } else {
                     mBinding.fragmentListToolbarEditTextClose.setVisibility(View.VISIBLE);
                 }
+                paginationAdapter.clearItems();
+                mSearchText = charSequence.toString();
+                subscribeForData();
             }
 
             @Override
@@ -110,6 +129,26 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
             }
         });
 
+    }
+
+
+    private void initialiseViewModel() {
+        mMainViewModel = ViewModelProviders.of(this, viewModelFactory).get(MainViewModel.class);
+
+        mMainViewModel.getSearchListLiveData().observe(this, apiResponseResource -> {
+            if (apiResponseResource.isSuccess()) {
+                paginationAdapter.addItems(apiResponseResource.data.getPhotos());
+            } else {
+                Toast.makeText(requireContext(), "You are NOT search item", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    @Override
+    public void onDestroy() {
+        compositeDisposable.clear();
+        mMainViewModel.onStop();
+        super.onDestroy();
     }
 
 
@@ -122,67 +161,44 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
             public void onScrolled(RecyclerView recyclerView,
                                    int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-
-                totalItemCount = layoutManager.getItemCount();
-                lastVisibleItem = layoutManager
-                        .findLastVisibleItemPosition();
-                if (!loading
-                        && totalItemCount <= (lastVisibleItem + VISIBLE_THRESHOLD)) {
-                    pageNumber++;
-                    paginator.onNext(pageNumber);
-                    loading = true;
+                if (dy > 0) {
+                    totalItemCount = layoutManager.getItemCount();
+                    lastVisibleItem = layoutManager
+                            .findLastVisibleItemPosition();
+                    if (!loading
+                            && totalItemCount <= (lastVisibleItem + VISIBLE_THRESHOLD)) {
+                        Timber.e("jjjjjjjjjjjjjjjjjj"
+                                + "" + dy);
+                        pageNumber++;
+                        paginator.onNext(pageNumber);
+                        loading = true;
+                    }
                 }
             }
         });
+
+
     }
 
     /**
      * subscribing for data
      */
     private void subscribeForData() {
-
         Disposable disposable = paginator
                 .onBackpressureDrop()
                 .doOnNext(page -> {
                     loading = true;
                     mBinding.fragmentSearchProgressBar.setVisibility(View.VISIBLE);
-                })
-                .concatMapSingle(page -> dataFromNetwork(page)
-                        .subscribeOn(Schedulers.io())
-                        .doOnError(throwable -> {
-                            // handle error
-                        }))
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(items -> {
-//                    paginationAdapter.addItems(items);
-                    paginationAdapter.notifyDataSetChanged();
+                    mMainViewModel.fetchSearchPhotoList(mSearchText, 20, page);
+                }).subscribe(items -> {
                     loading = false;
                     mBinding.fragmentSearchProgressBar.setVisibility(View.INVISIBLE);
                 });
-
         compositeDisposable.add(disposable);
-
         paginator.onNext(pageNumber);
-
     }
 
-    /**
-     * Simulation of network data
-     */
-    private Single<List<PaginationItem>> dataFromNetwork(final int page) {
-        return Single.just(true)
-                .delay(1, TimeUnit.SECONDS)
-                .map(value -> {
-                    List<PaginationItem> items = new ArrayList<>();
-                    for (int i = 1; i <= 10; i++) {
-                        PaginationItem item = new PaginationItem();
-                        item.setImage(R.drawable.adventure4);
-                        item.setProfileCircleImage(R.drawable.adventure4);
-                        items.add(item);
-                    }
-                    return items;
-                });
-    }
+
 
     @Override
     public void onItemClicked(View view, Object item, int position) {
@@ -192,26 +208,47 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
                 photoFullScreenHelper.fullScreen(requireFragmentManager(), view, ((Image) item).getSrc());
                 break;
             case R.id.item_paging_favorite:
-                paginationAdapter.updateItem(position,0);
+                paginationAdapter.updateItem(position, -10);
                 break;
             case R.id.item_paging_share:
                 Intent sendIntent = new Intent();
                 sendIntent.setAction(Intent.ACTION_SEND);
-                sendIntent.putExtra(Intent.EXTRA_TEXT, "heey");
+                sendIntent.putExtra(Intent.EXTRA_TEXT, paginationAdapter.getUrl(position));
                 sendIntent.setType("text/plain");
                 startActivity(sendIntent);
                 break;
             case R.id.item_paging_download:
-                BottomSheetSizeHelper bottomSheetSizeHelper = new BottomSheetSizeHelper();
-                bottomSheetSizeHelper.ItemClich(requireActivity(),getLayoutInflater(), paginationAdapter, requireContext(), position,((Image) item).getSrc());
+                String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+                Permissions.check(requireContext(), permissions, null/*rationale*/, null/*options*/, new PermissionHandler() {
+                    @Override
+                    public void onGranted() {
+                        BottomSheetSizeHelper bottomSheetSizeHelper = new BottomSheetSizeHelper();
+                        bottomSheetSizeHelper.ItemClich(requireActivity(), getLayoutInflater(), paginationAdapter, requireContext(), position, ((Image) item).getSrc());
+                    }
+                });
+                RxBus.getInstance().listen().subscribe(new io.reactivex.Observer<Integer>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onNext(Integer integer) {
+                        paginationAdapter.updateItem(position, integer);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+                });
                 break;
         }
-    }
-
-    @Override
-    public void onStop() {
-        compositeDisposable.clear();
-        super.onStop();
     }
 
 }

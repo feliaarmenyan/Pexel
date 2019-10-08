@@ -32,9 +32,8 @@ public class ApiRepository {
                 .doOnError(t -> {
                     Timber.e(t);
                 })
-                .onErrorResumeNext(throwable -> {
-                    return Single.just(Resource.error(throwable.getMessage(), new ApiResponse()));
-                })
+                .onErrorResumeNext(throwable -> Single.just(
+                        Resource.error(throwable.getMessage(), new ApiResponse())))
                 .observeOn(AndroidSchedulers.mainThread());
     }
 
@@ -49,9 +48,8 @@ public class ApiRepository {
                 .doOnError(t -> {
                     Timber.e(t);
                 })
-                .onErrorResumeNext(throwable -> {
-                    return Single.just(Resource.error(throwable.getMessage(), new ApiResponse()));
-                })
+                .onErrorResumeNext(throwable -> Single.just(
+                        Resource.error(throwable.getMessage(), new ApiResponse())))
                 .observeOn(AndroidSchedulers.mainThread());
     }
 }

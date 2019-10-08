@@ -22,6 +22,9 @@ public class RequestInterceptor implements Interceptor {
                 .method(originalRequest.method(), originalRequest.body());
 
         Request request = requestBuilder.build();
-        return chain.proceed(request);
+        Response response = chain.proceed(request);
+
+//        return chain.proceed(request);
+        return response;
     }
 }

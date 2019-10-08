@@ -21,9 +21,6 @@ import am.foursteps.pexel.ui.main.activity.MainActivity;
 
 public class ItemFragment extends Fragment {
     private FragmentItemOfListBinding mBinding;
-    private Object mObject;
-    private ImageView mImageView;
-    private ItemFragment fragment;
     private ImageSrc src;
 
     public static ItemFragment newInstance(ImageSrc src) {
@@ -54,16 +51,7 @@ public class ItemFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         mBinding.imageView.setTransitionName("image");
-//        mBinding.imageView.setImageResource(R.drawable.adventure4);
-
         ImageUrlHelper.ImageUrl(mBinding.imageView,src);
-//        GlideApp.with(requireContext()).load(src).into(mBinding.imageView);
-
-//        Picasso.get().load(url).into(mBinding.imageView);
-
-
-
-
         mBinding.phoneNumberToolbar.setOnClickListener(view1 -> requireActivity().onBackPressed());
         ((MainActivity) requireActivity()).updateStatusBarColor("#000000");
 

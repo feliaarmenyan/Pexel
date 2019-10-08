@@ -49,6 +49,10 @@ public class PaginationAdapter extends RecyclerView.Adapter<PaginationAdapter.It
 //        item.setProgress(progress);
         this.notifyItemChanged(position, item);
     }
+    public void clearItems(){
+        items.clear();
+        this.notifyDataSetChanged();
+    }
 
     @NonNull
     @Override

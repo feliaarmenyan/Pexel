@@ -34,11 +34,11 @@ public class MainViewModel extends BaseViewModel {
     }
 
     @SuppressLint("CheckResult")
-    public void fetchSearchPhotoList(int perPage, int page){
-        mApiRepository.curatedPhotos(perPage, page)
+    public void fetchSearchPhotoList(String searchString,int perPage, int page){
+        mApiRepository.searchPhotos(searchString,perPage, page)
                 .doOnSubscribe(this::addToDisposable)
                 .subscribe(response -> {
-                    getListLiveData().postValue(response);
+                    getSearchListLiveData().postValue(response);
                 });
     }
 
@@ -46,4 +46,9 @@ public class MainViewModel extends BaseViewModel {
     public MutableLiveData<Resource<ApiResponse>> getListLiveData() {
         return listLiveData;
     }
+
+    public MutableLiveData<Resource<ApiResponse>> getSearchListLiveData() {
+        return listLiveData;
+    }
+
 }

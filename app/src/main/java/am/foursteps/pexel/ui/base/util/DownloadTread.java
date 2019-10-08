@@ -30,14 +30,12 @@ public class DownloadTread extends Thread {
     private DownloadManager manager;
     private BottomSheetSizeHelper mBottomSheetSizeHelper = new BottomSheetSizeHelper();
     private PaginationAdapter mPaginationAdapter;
-    private int position;
 
-    public DownloadTread(long downloadId, Activity activity, DownloadManager manager, int position) {
+    public DownloadTread(long downloadId, Activity activity, DownloadManager manager) {
         this.downloadId = downloadId;
         this.query = new DownloadManager.Query();
         this.activity = activity;
         this.manager = manager;
-        this.position = position;
         query.setFilterById(this.downloadId);
     }
 
@@ -52,6 +50,7 @@ public class DownloadTread extends Thread {
                     //get total bytes of the file
                     if (totalBytes <= 0) {
                         totalBytes = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
+                        lastBytesDownloadedSoFar=totalBytes;
                     }
                     final int bytesDownloadedSoFar = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
                     if (bytesDownloadedSoFar == totalBytes && totalBytes > 0) {
@@ -59,7 +58,6 @@ public class DownloadTread extends Thread {
                     } else {
                         //update progress bar
                         activity.runOnUiThread(() -> {
-
                             RxBus.getInstance().publish((bytesDownloadedSoFar / lastBytesDownloadedSoFar)*100);
 //                            Observable.create(new ObservableOnSubscribe() {
 //                                @Override
@@ -70,7 +68,6 @@ public class DownloadTread extends Thread {
 //                                    }
 //                                }
 //                            });
-
                         });
                     }
                 }
@@ -80,9 +77,6 @@ public class DownloadTread extends Thread {
             }
         }
     }
-
-
-
 //                             new SingleObserver<Integer>() {
 //                                    @Override
 //                                    public void onSubscribe(Disposable d) {

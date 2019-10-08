@@ -4,14 +4,19 @@ import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;
 
 public class RxBus {
-    private static final RxBus ourInstance = new RxBus();
 
-   public static RxBus getInstance() {
-        return ourInstance;
+    private static RxBus mInstance;
+
+    public static RxBus getInstance() {
+        if (mInstance == null) {
+            mInstance = new RxBus();
+        }
+        return mInstance;
     }
 
     private RxBus() {
     }
+
     private PublishSubject<Integer> publisher = PublishSubject.create();
 
     void publish(Integer event) {

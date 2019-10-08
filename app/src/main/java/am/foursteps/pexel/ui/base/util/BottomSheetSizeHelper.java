@@ -90,6 +90,7 @@ public class BottomSheetSizeHelper {
                     mImageSrc = src.getSmall();
             }
             Uri uri = Uri.parse(mImageSrc);
+//            mImageSrc="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4";
             DownloadManager.Request request = new DownloadManager.Request(uri)
                     .setDestinationInExternalPublicDir(
                             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath(), new Date() + ".jpg")// Uri of the destination file
@@ -100,12 +101,12 @@ public class BottomSheetSizeHelper {
             DownloadManager dm = (DownloadManager) activity.getSystemService(DOWNLOAD_SERVICE);
 
             long downloadId = dm.enqueue(request);
+            new DownloadTread(downloadId, activity, dm).start();
+
             DownloadManager.Query query = new DownloadManager.Query();
             query.setFilterById(downloadId);
 
 
-            dm = (DownloadManager) activity.getSystemService(Context.DOWNLOAD_SERVICE);
-            new DownloadTread(downloadId, activity, dm, position).start();
 
 //
 //                new SingleObserver<Integer>() {
