@@ -3,20 +3,8 @@ package am.foursteps.pexel.ui.base.util;
 import android.app.Activity;
 import android.app.DownloadManager;
 import android.database.Cursor;
-import android.util.Log;
-import android.widget.Toast;
 
 import am.foursteps.pexel.ui.main.adapter.PaginationAdapter;
-import io.reactivex.Observable;
-import io.reactivex.ObservableEmitter;
-import io.reactivex.ObservableOnSubscribe;
-import io.reactivex.Single;
-import io.reactivex.SingleEmitter;
-import io.reactivex.SingleObserver;
-import io.reactivex.SingleOnSubscribe;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.schedulers.Schedulers;
-import timber.log.Timber;
 
 
 public class DownloadTread extends Thread {

@@ -1,13 +1,11 @@
 package am.foursteps.pexel.ui.base.util;
 
-import android.net.Uri;
 import android.transition.Fade;
 import android.view.View;
 
 import androidx.fragment.app.FragmentManager;
 
 import am.foursteps.pexel.R;
-import am.foursteps.pexel.data.remote.model.Image;
 import am.foursteps.pexel.data.remote.model.ImageSrc;
 import am.foursteps.pexel.ui.main.fragment.ItemFragment;
 import am.foursteps.pexel.utils.DetailsTransition;

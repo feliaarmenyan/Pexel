@@ -6,7 +6,6 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Environment;
 import android.view.LayoutInflater;
-import android.widget.Toast;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -24,7 +23,6 @@ import am.foursteps.pexel.databinding.BottomSheetBinding;
 import am.foursteps.pexel.ui.main.adapter.ChooseSizeAdapter;
 import am.foursteps.pexel.ui.main.adapter.PaginationAdapter;
 import io.reactivex.SingleObserver;
-import io.reactivex.disposables.Disposable;
 
 import static android.content.Context.DOWNLOAD_SERVICE;
 

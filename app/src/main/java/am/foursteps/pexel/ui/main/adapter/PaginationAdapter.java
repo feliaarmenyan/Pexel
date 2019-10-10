@@ -1,6 +1,5 @@
 package am.foursteps.pexel.ui.main.adapter;
 
-import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 

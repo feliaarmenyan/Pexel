@@ -8,6 +8,7 @@ import javax.inject.Singleton;
 import am.foursteps.pexel.AppController;
 import am.foursteps.pexel.di.module.ActivityModule;
 import am.foursteps.pexel.di.module.ApiModule;
+import am.foursteps.pexel.di.module.DbModule;
 import am.foursteps.pexel.di.module.FragmentModule;
 import am.foursteps.pexel.di.module.ViewModelModule;
 import dagger.BindsInstance;
@@ -15,7 +16,7 @@ import dagger.Component;
 import dagger.android.support.AndroidSupportInjectionModule;
 
 @Singleton
-@Component(modules = {ApiModule.class, ViewModelModule.class,
+@Component(modules = {ApiModule.class, ViewModelModule.class, DbModule.class,
         AndroidSupportInjectionModule.class, ActivityModule.class, FragmentModule.class})
 public interface ApiComponent {
 
@@ -28,6 +29,9 @@ public interface ApiComponent {
         Builder apiModule(ApiModule apiModule);
 
         ApiComponent build();
+
+        @BindsInstance
+        Builder dbModule(DbModule dbModule);
     }
 
     void inject(AppController appController);

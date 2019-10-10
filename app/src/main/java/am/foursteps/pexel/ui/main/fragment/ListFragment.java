@@ -2,7 +2,6 @@ package am.foursteps.pexel.ui.main.fragment;
 
 import android.Manifest;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -39,7 +38,6 @@ import dagger.android.support.AndroidSupportInjection;
 import io.reactivex.Observer;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Action;
 import io.reactivex.processors.PublishProcessor;
 
 public class ListFragment extends Fragment implements OnRecyclerItemClickListener {

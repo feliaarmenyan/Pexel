@@ -6,6 +6,8 @@ import androidx.lifecycle.MutableLiveData;
 
 import javax.inject.Inject;
 
+import am.foursteps.pexel.data.local.dao.FavoritePhotoDao;
+import am.foursteps.pexel.data.local.dao.FavoritePhotoSrcDao;
 import am.foursteps.pexel.data.remote.Resource;
 import am.foursteps.pexel.data.remote.api.ApiService;
 import am.foursteps.pexel.data.remote.model.ApiResponse;
@@ -19,8 +21,8 @@ public class MainViewModel extends BaseViewModel {
     private MutableLiveData<Resource<ApiResponse>> listLiveData = new MutableLiveData<>();
 
     @Inject
-    public MainViewModel(ApiService apiService) {
-        this.mApiRepository = new ApiRepository(apiService);
+    public MainViewModel(ApiService apiService, FavoritePhotoDao favoritePhotoDao, FavoritePhotoSrcDao favoritePhotoSrcDao) {
+        this.mApiRepository = new ApiRepository(apiService,favoritePhotoDao,favoritePhotoSrcDao);
     }
 
 

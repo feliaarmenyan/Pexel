@@ -4,6 +4,8 @@ import androidx.annotation.MainThread;
 
 import javax.inject.Singleton;
 
+import am.foursteps.pexel.data.local.dao.FavoritePhotoDao;
+import am.foursteps.pexel.data.local.dao.FavoritePhotoSrcDao;
 import am.foursteps.pexel.data.remote.Resource;
 import am.foursteps.pexel.data.remote.api.ApiService;
 import am.foursteps.pexel.data.remote.model.ApiResponse;
@@ -16,9 +18,14 @@ import timber.log.Timber;
 public class ApiRepository {
 
     private ApiService mApiService;
+    private FavoritePhotoDao  mFavoritePhotoDao;
+    private FavoritePhotoSrcDao mFavoritePhotoSrcDao;
 
-    public ApiRepository(ApiService apiService) {
+
+    public ApiRepository(ApiService apiService, FavoritePhotoDao favoritePhotoDao, FavoritePhotoSrcDao favoritePhotoSrcDao) {
         mApiService = apiService;
+        mFavoritePhotoDao = favoritePhotoDao;
+        mFavoritePhotoSrcDao = favoritePhotoSrcDao;
     }
 
     @MainThread

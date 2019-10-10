@@ -67,8 +67,13 @@ dependencies {
     implementation 'com.nabinbhandari.android:permissions:3.8'
 
 
+    /*room with rx*/
+    implementation 'androidx.room:room-runtime:2.2.0'
+    implementation 'androidx.room:room-rxjava2:2.2.0'
+    annotationProcessor 'androidx.room:room-compiler:2.2.0'
     /*testing*/
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test:runner:1.2.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+
 }

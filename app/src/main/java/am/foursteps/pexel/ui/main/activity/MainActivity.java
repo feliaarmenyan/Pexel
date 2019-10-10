@@ -13,7 +13,6 @@ import javax.inject.Inject;
 
 import am.foursteps.pexel.R;
 import am.foursteps.pexel.data.local.def.AnimationType;
-import am.foursteps.pexel.databinding.ActivityMainBinding;
 import am.foursteps.pexel.ui.main.fragment.ListFragment;
 import am.foursteps.pexel.utils.ActivityUtil;
 import dagger.android.AndroidInjection;
