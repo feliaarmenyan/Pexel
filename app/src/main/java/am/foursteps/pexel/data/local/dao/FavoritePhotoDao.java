@@ -32,8 +32,8 @@ public interface FavoritePhotoDao {
     @Update(onConflict = OnConflictStrategy.REPLACE)
     void update(FavoritePhotoEntity favoritePhotoEntity);
 
-    @Query("DELETE FROM favoritephotoentity WHERE id=:id")
-    void delete(long id);
+    @Query("DELETE FROM favoritephotoentity WHERE primaryKey=:primaryKey")
+    void delete(String primaryKey);
 
     @Query("DELETE FROM favoritephotoentity")
     void deleteAll();

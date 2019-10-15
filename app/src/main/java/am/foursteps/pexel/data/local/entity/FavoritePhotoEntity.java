@@ -1,70 +1,74 @@
 package am.foursteps.pexel.data.local.entity;
 
-import androidx.room.ColumnInfo;
+import androidx.annotation.NonNull;
 import androidx.room.Entity;
-import androidx.room.ForeignKey;
 import androidx.room.PrimaryKey;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import static androidx.room.ForeignKey.CASCADE;
+import am.foursteps.pexel.data.remote.model.ImageSrc;
 
-@Entity(foreignKeys = @ForeignKey(entity = FavoritePhotoEntity.class, parentColumns = "id", childColumns = "src_id", onDelete = CASCADE))
+@Entity
 public class FavoritePhotoEntity {
 
-    @PrimaryKey(autoGenerate = true)
-    @ColumnInfo(name = "id")
-    private long id;
+    @PrimaryKey
+    @NonNull
+    private String primaryKey;
+
     @JsonProperty("width")
     private Integer width;
     @JsonProperty("height")
     private Integer height;
+
     @JsonProperty("url")
     private String url;
-    @ColumnInfo(name = "src_id")
-    private long srcId;
+
+    private ImageSrc ImageSrc;
 
     public FavoritePhotoEntity() {
     }
 
-    public long getId() {
-        return id;
+    @NonNull
+    public String getPrimaryKey() {
+        return primaryKey;
     }
 
-    public void setId(long id) {
-        this.id = id;
+    public void setPrimaryKey(@NonNull String primaryKey) {
+        this.primaryKey = primaryKey;
     }
 
+    @NonNull
     public Integer getWidth() {
         return width;
     }
 
-    public void setWidth(Integer width) {
+    public void setWidth(@NonNull Integer width) {
         this.width = width;
     }
 
+    @NonNull
     public Integer getHeight() {
         return height;
     }
 
-    public void setHeight(Integer height) {
+    public void setHeight(@NonNull Integer height) {
         this.height = height;
     }
 
+    @NonNull
     public String getUrl() {
         return url;
     }
 
-    public void setUrl(String url) {
+    public void setUrl(@NonNull String url) {
         this.url = url;
     }
 
-    public long getSrcId() {
-        return srcId;
+    public ImageSrc getImageSrc() {
+        return ImageSrc;
     }
 
-    public void setSrcId(long srcId) {
-        this.srcId = srcId;
+    public void setImageSrc(ImageSrc imageSrc) {
+        ImageSrc = imageSrc;
     }
 }

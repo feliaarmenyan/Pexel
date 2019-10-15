@@ -4,25 +4,32 @@ import android.annotation.SuppressLint;
 
 import androidx.lifecycle.MutableLiveData;
 
+import java.util.List;
+
 import javax.inject.Inject;
 
 import am.foursteps.pexel.data.local.dao.FavoritePhotoDao;
-import am.foursteps.pexel.data.local.dao.FavoritePhotoSrcDao;
+import am.foursteps.pexel.data.local.entity.FavoritePhotoEntity;
 import am.foursteps.pexel.data.remote.Resource;
 import am.foursteps.pexel.data.remote.api.ApiService;
 import am.foursteps.pexel.data.remote.model.ApiResponse;
 import am.foursteps.pexel.data.repository.ApiRepository;
 import am.foursteps.pexel.ui.base.BaseViewModel;
+import am.foursteps.pexel.ui.base.LiveData.SingleLiveEvent;
 
 
 public class MainViewModel extends BaseViewModel {
 
     private ApiRepository mApiRepository;
     private MutableLiveData<Resource<ApiResponse>> listLiveData = new MutableLiveData<>();
+    private MutableLiveData<Resource<List<FavoritePhotoEntity>>> favoriteLiveData = new MutableLiveData<>();
+    private SingleLiveEvent<Boolean> isDelete = new SingleLiveEvent<>();
+    private SingleLiveEvent<Boolean> isInsert = new SingleLiveEvent<>();
+
 
     @Inject
-    public MainViewModel(ApiService apiService, FavoritePhotoDao favoritePhotoDao, FavoritePhotoSrcDao favoritePhotoSrcDao) {
-        this.mApiRepository = new ApiRepository(apiService,favoritePhotoDao,favoritePhotoSrcDao);
+    public MainViewModel(ApiService apiService, FavoritePhotoDao favoritePhotoDao) {
+        this.mApiRepository = new ApiRepository(apiService,favoritePhotoDao);
     }
 
 
@@ -44,6 +51,33 @@ public class MainViewModel extends BaseViewModel {
                 });
     }
 
+    @SuppressLint("CheckResult")
+    public void fetchFavoriteList(){
+//        mApiRepository.getFavorites()
+////                .doOnSubscribe(this::addToDisposable)
+//                .subscribe(response -> {
+//                    getFavoriteListLiveData().postValue((Resource<List<PhotoWithSrc>>) response);
+//                });
+    }
+
+    @SuppressLint("CheckResult")
+    public void deleteFavorite(String primaryKey){
+        mApiRepository.deleteFavorite(primaryKey)
+                .doOnSubscribe(this::addToDisposable)
+                .subscribe(response -> {
+                    getIsDelete().postValue(response);
+                });
+    }
+
+    @SuppressLint("CheckResult")
+    public void insertFavorite(FavoritePhotoEntity favoritePhotoEntity){
+        mApiRepository.insertFavorite(favoritePhotoEntity)
+                .doOnSubscribe(this::addToDisposable)
+                .subscribe(response -> {
+                    getIsInsert().postValue(response);
+                });
+    }
+
 
     public MutableLiveData<Resource<ApiResponse>> getListLiveData() {
         return listLiveData;
@@ -51,6 +85,19 @@ public class MainViewModel extends BaseViewModel {
 
     public MutableLiveData<Resource<ApiResponse>> getSearchListLiveData() {
         return listLiveData;
+    }
+
+    public MutableLiveData<Resource<List<FavoritePhotoEntity>>> getFavoriteListLiveData() {
+        return favoriteLiveData;
+    }
+
+    public SingleLiveEvent<Boolean> getIsDelete() {
+
+        return isDelete;
+    }
+
+    public SingleLiveEvent<Boolean> getIsInsert() {
+        return isInsert;
     }
 
 }

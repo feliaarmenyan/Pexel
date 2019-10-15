@@ -5,7 +5,6 @@ import android.app.Application;
 
 import javax.inject.Inject;
 
-import am.foursteps.pexel.di.component.ApiComponent;
 import am.foursteps.pexel.di.component.DaggerApiComponent;
 import am.foursteps.pexel.di.module.ApiModule;
 import am.foursteps.pexel.di.module.DbModule;

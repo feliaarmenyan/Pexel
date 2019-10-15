@@ -9,7 +9,6 @@ import javax.inject.Singleton;
 
 import am.foursteps.pexel.data.local.AppDatabase;
 import am.foursteps.pexel.data.local.dao.FavoritePhotoDao;
-import am.foursteps.pexel.data.local.dao.FavoritePhotoSrcDao;
 import dagger.Module;
 import dagger.Provides;
 
@@ -29,12 +28,4 @@ public class DbModule {
     FavoritePhotoDao favoritePhotoDao(@NonNull AppDatabase appDatabase) {
         return appDatabase.mFavoritePhotoDao();
     }
-
-
-    @Provides
-    @Singleton
-    FavoritePhotoSrcDao favoritePhotoSrcDao(@NonNull AppDatabase appDatabase) {
-        return appDatabase.mFavoritePhotoSrcDao();
-    }
-
 }

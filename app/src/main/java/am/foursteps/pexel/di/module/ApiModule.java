@@ -5,6 +5,9 @@ import android.content.Context;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.modelmapper.Conditions;
+import org.modelmapper.ModelMapper;
+
 import java.io.File;
 import java.util.concurrent.TimeUnit;
 
@@ -35,6 +38,14 @@ public class ApiModule {
         ObjectMapper objectMapper = new ObjectMapper();
 
         return objectMapper;
+    }
+
+    @Provides
+    @Singleton
+    ModelMapper provideModelMapper() {
+        ModelMapper modelMapper = new ModelMapper();
+        modelMapper.getConfiguration().setPropertyCondition(Conditions.isNotNull());
+        return modelMapper;
     }
 
     @Provides

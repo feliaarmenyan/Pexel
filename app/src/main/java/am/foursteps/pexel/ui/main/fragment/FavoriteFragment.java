@@ -5,34 +5,35 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+
+import javax.inject.Inject;
 
 import am.foursteps.pexel.R;
-import am.foursteps.pexel.data.local.model.PaginationItem;
+import am.foursteps.pexel.data.local.entity.FavoritePhotoEntity;
 import am.foursteps.pexel.data.remote.model.Image;
 import am.foursteps.pexel.databinding.FragmentFavoriteListBinding;
+import am.foursteps.pexel.factory.ViewModelFactory;
 import am.foursteps.pexel.ui.base.interfaces.OnRecyclerItemClickListener;
 import am.foursteps.pexel.ui.base.util.BottomSheetSizeHelper;
 import am.foursteps.pexel.ui.base.util.PhotoFullScreenHelper;
 import am.foursteps.pexel.ui.main.activity.MainActivity;
-import am.foursteps.pexel.ui.main.adapter.PaginationAdapter;
-import io.reactivex.Single;
-import io.reactivex.android.schedulers.AndroidSchedulers;
+import am.foursteps.pexel.ui.main.adapter.FavoriteAdapter;
+import am.foursteps.pexel.ui.main.viewmodel.MainViewModel;
+import dagger.android.support.AndroidSupportInjection;
 import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
 import io.reactivex.processors.PublishProcessor;
-import io.reactivex.schedulers.Schedulers;
 
 public class FavoriteFragment extends Fragment implements OnRecyclerItemClickListener {
 
@@ -41,22 +42,30 @@ public class FavoriteFragment extends Fragment implements OnRecyclerItemClickLis
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     private PublishProcessor<Integer> paginator = PublishProcessor.create();
-    private PaginationAdapter paginationAdapter;
-    private boolean loading = false;
-    private int pageNumber = 1;
-    private final int VISIBLE_THRESHOLD = 4;
-    private int lastVisibleItem, totalItemCount;
+    private FavoriteAdapter mFavoriteAdapter;
     private LinearLayoutManager layoutManager;
+    private List<FavoritePhotoEntity> mFavoritePhotoEntityList;
+
+    @Inject
+    ViewModelFactory viewModelFactory;
+
+    private MainViewModel mMainViewModel;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        AndroidSupportInjection.inject(this);
+        initialiseViewModel();
+        setRetainInstance(true);
+        super.onCreate(savedInstanceState);
+    }
 
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         mBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_favorite_list, container, false);
-        setUpLoadMoreListener();
-        subscribeForData();
+//        mFavoritePhotoEntityList = new ArrayList<>();
         return mBinding.getRoot();
     }
 
@@ -65,12 +74,12 @@ public class FavoriteFragment extends Fragment implements OnRecyclerItemClickLis
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ((MainActivity) requireActivity()).updateStatusBarColor("#034D59");
-        paginationAdapter = new PaginationAdapter(this);
+        mFavoriteAdapter = new FavoriteAdapter(this);
         layoutManager = new LinearLayoutManager(requireContext());
         layoutManager.setOrientation(RecyclerView.VERTICAL);
         mBinding.fragmentFavoriteRecyclerView.setLayoutManager(layoutManager);
-        mBinding.fragmentFavoriteRecyclerView.setAdapter(paginationAdapter);
-        mBinding.fragmentFavoriteRecyclerView.setLayoutManager(new GridLayoutManager(getContext(), 1));
+        mBinding.fragmentFavoriteRecyclerView.setAdapter(mFavoriteAdapter);
+        mMainViewModel.fetchFavoriteList();
         mBinding.fragmentFavoriteSwipeRefresh.setOnRefreshListener(() -> {
             layoutManager.getInitialPrefetchItemCount();
             mBinding.fragmentFavoriteSwipeRefresh.postDelayed(() -> mBinding.fragmentFavoriteSwipeRefresh.setRefreshing(false), 500);
@@ -79,75 +88,16 @@ public class FavoriteFragment extends Fragment implements OnRecyclerItemClickLis
     }
 
 
-    /**
-     * setting listener to get callback for load more
-     */
-    private void setUpLoadMoreListener() {
-        mBinding.fragmentFavoriteRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrolled(RecyclerView recyclerView,
-                                   int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
+    private void initialiseViewModel() {
+        mMainViewModel = ViewModelProviders.of(this, viewModelFactory).get(MainViewModel.class);
 
-                totalItemCount = layoutManager.getItemCount();
-                lastVisibleItem = layoutManager
-                        .findLastVisibleItemPosition();
-                if (!loading
-                        && totalItemCount <= (lastVisibleItem + VISIBLE_THRESHOLD)) {
-                    pageNumber++;
-                    paginator.onNext(pageNumber);
-                    loading = true;
-                }
+        mMainViewModel.getFavoriteListLiveData().observe(this, resource -> {
+            if (resource.isSuccess()) {
+                mFavoriteAdapter.addItems(resource.data);
+            } else {
+                Toast.makeText(requireContext(), "You are NOT Favorite item", Toast.LENGTH_SHORT).show();
             }
         });
-    }
-
-    /**
-     * subscribing for data
-     */
-    private void subscribeForData() {
-
-        Disposable disposable = paginator
-                .onBackpressureDrop()
-                .doOnNext(page -> {
-                    loading = true;
-                    mBinding.fragmentFavoriteProgressBar.setVisibility(View.VISIBLE);
-                })
-                .concatMapSingle(page -> dataFromNetwork(page)
-                        .subscribeOn(Schedulers.io())
-                        .doOnError(throwable -> {
-                            // handle error
-                        }))
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(items -> {
-//                    paginationAdapter.addItems(items);
-                    paginationAdapter.notifyDataSetChanged();
-                    loading = false;
-                    mBinding.fragmentFavoriteProgressBar.setVisibility(View.INVISIBLE);
-                });
-
-        compositeDisposable.add(disposable);
-
-        paginator.onNext(pageNumber);
-
-    }
-
-    /**
-     * Simulation of network data
-     */
-    private Single<List<PaginationItem>> dataFromNetwork(final int page) {
-        return Single.just(true)
-                .delay(1, TimeUnit.SECONDS)
-                .map(value -> {
-                    List<PaginationItem> items = new ArrayList<>();
-                    for (int i = 1; i <= 10; i++) {
-                        PaginationItem item = new PaginationItem();
-                        item.setImage(R.drawable.adventure4);
-                        item.setProfileCircleImage(R.drawable.adventure4);
-                        items.add(item);
-                    }
-                    return items;
-                });
     }
 
     @Override
@@ -158,7 +108,7 @@ public class FavoriteFragment extends Fragment implements OnRecyclerItemClickLis
                 photoFullScreenHelper.fullScreen(requireFragmentManager(), view,((Image) item).getSrc());
                 break;
             case R.id.item_paging_favorite:
-                paginationAdapter.updateItem(position,0);
+                mFavoriteAdapter.removeItem(position);
                 break;
             case R.id.item_paging_share:
                 Intent sendIntent = new Intent();
@@ -169,7 +119,7 @@ public class FavoriteFragment extends Fragment implements OnRecyclerItemClickLis
                 break;
             case R.id.item_paging_download:
                 BottomSheetSizeHelper bottomSheetSizeHelper = new BottomSheetSizeHelper();
-                bottomSheetSizeHelper.ItemClich(requireActivity(),getLayoutInflater(), paginationAdapter, requireContext(), position, ((Image) item).getSrc());
+                bottomSheetSizeHelper.ItemClich(requireActivity(), getLayoutInflater(), requireContext(), position, ((Image) item).getSrc());
                 break;
         }
     }

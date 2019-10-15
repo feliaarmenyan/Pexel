@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.app.DownloadManager;
 import android.database.Cursor;
 
-import am.foursteps.pexel.ui.main.adapter.PaginationAdapter;
+import am.foursteps.pexel.ui.main.adapter.ImageAdapter;
 
 
 public class DownloadTread extends Thread {
@@ -17,7 +17,7 @@ public class DownloadTread extends Thread {
     private Activity activity;
     private DownloadManager manager;
     private BottomSheetSizeHelper mBottomSheetSizeHelper = new BottomSheetSizeHelper();
-    private PaginationAdapter mPaginationAdapter;
+    private ImageAdapter mImageAdapter;
 
     public DownloadTread(long downloadId, Activity activity, DownloadManager manager) {
         this.downloadId = downloadId;
@@ -88,7 +88,7 @@ public class DownloadTread extends Thread {
 //                            a[1]=bytesDownloadedSoFar;
 //                            Single.just(a).subscribe(mBottomSheetSizeHelper.getSingleObserver);
 
-//                            mPaginationAdapter.updateItem(position, (bytesDownloadedSoFar - lastBytesDownloadedSoFar));
+//                            mImageAdapter.updateItem(position, (bytesDownloadedSoFar - lastBytesDownloadedSoFar));
 ////                                        .setProgress(mProgressBar.getProgress() + (bytesDownloadedSoFar - lastBytesDownloadedSoFar));
 //                            lastBytesDownloadedSoFar = bytesDownloadedSoFar;
 

@@ -34,7 +34,7 @@ import am.foursteps.pexel.ui.base.util.BottomSheetSizeHelper;
 import am.foursteps.pexel.ui.base.util.PhotoFullScreenHelper;
 import am.foursteps.pexel.ui.base.util.RxBus;
 import am.foursteps.pexel.ui.main.activity.MainActivity;
-import am.foursteps.pexel.ui.main.adapter.PaginationAdapter;
+import am.foursteps.pexel.ui.main.adapter.ImageAdapter;
 import am.foursteps.pexel.ui.main.viewmodel.MainViewModel;
 import dagger.android.support.AndroidSupportInjection;
 import io.reactivex.disposables.CompositeDisposable;
@@ -49,7 +49,7 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     private PublishProcessor<Integer> paginator = PublishProcessor.create();
-    private PaginationAdapter paginationAdapter;
+    private ImageAdapter mImageAdapter;
     private boolean loading = false;
     private int pageNumber = 1;
     private final int VISIBLE_THRESHOLD = 4;
@@ -86,11 +86,11 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ((MainActivity) requireActivity()).updateStatusBarColor("#034D59");
-        paginationAdapter = new PaginationAdapter(this);
+        mImageAdapter = new ImageAdapter(this);
         layoutManager = new LinearLayoutManager(requireContext());
         layoutManager.setOrientation(RecyclerView.VERTICAL);
         mBinding.fragmentSearchRecyclerView.setLayoutManager(layoutManager);
-        mBinding.fragmentSearchRecyclerView.setAdapter(paginationAdapter);
+        mBinding.fragmentSearchRecyclerView.setAdapter(mImageAdapter);
         setUpLoadMoreListener();
         mMainViewModel.fetchSearchPhotoList(mSearchText, 20, pageNumber);
         mBinding.fragmentSearchSwipeRefresh.setOnRefreshListener(() -> {
@@ -118,7 +118,7 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
                 } else {
                     mBinding.fragmentListToolbarEditTextClose.setVisibility(View.VISIBLE);
                 }
-                paginationAdapter.clearItems();
+                mImageAdapter.clearItems();
                 mSearchText = charSequence.toString();
                 subscribeForData();
             }
@@ -137,7 +137,7 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
 
         mMainViewModel.getSearchListLiveData().observe(this, apiResponseResource -> {
             if (apiResponseResource.isSuccess()) {
-                paginationAdapter.addItems(apiResponseResource.data.getPhotos());
+                mImageAdapter.addItems(apiResponseResource.data.getPhotos());
             } else {
                 Toast.makeText(requireContext(), "You are NOT search item", Toast.LENGTH_SHORT).show();
             }
@@ -208,12 +208,12 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
                 photoFullScreenHelper.fullScreen(requireFragmentManager(), view, ((Image) item).getSrc());
                 break;
             case R.id.item_paging_favorite:
-                paginationAdapter.updateItem(position, -10);
+                mImageAdapter.updateItem(position, -10);
                 break;
             case R.id.item_paging_share:
                 Intent sendIntent = new Intent();
                 sendIntent.setAction(Intent.ACTION_SEND);
-                sendIntent.putExtra(Intent.EXTRA_TEXT, paginationAdapter.getUrl(position));
+                sendIntent.putExtra(Intent.EXTRA_TEXT, mImageAdapter.getUrl(position));
                 sendIntent.setType("text/plain");
                 startActivity(sendIntent);
                 break;
@@ -223,7 +223,7 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
                     @Override
                     public void onGranted() {
                         BottomSheetSizeHelper bottomSheetSizeHelper = new BottomSheetSizeHelper();
-                        bottomSheetSizeHelper.ItemClich(requireActivity(), getLayoutInflater(), paginationAdapter, requireContext(), position, ((Image) item).getSrc());
+                        bottomSheetSizeHelper.ItemClich(requireActivity(), getLayoutInflater(), requireContext(), position, ((Image) item).getSrc());
                     }
                 });
                 RxBus.getInstance().listen().subscribe(new io.reactivex.Observer<Integer>() {
@@ -234,7 +234,7 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
 
                     @Override
                     public void onNext(Integer integer) {
-                        paginationAdapter.updateItem(position, integer);
+                        mImageAdapter.updateItem(position, integer);
                     }
 
                     @Override

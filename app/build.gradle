@@ -66,6 +66,8 @@ dependencies {
 
     implementation 'com.nabinbhandari.android:permissions:3.8'
 
+    /*dependency for java class mapping*/
+    implementation group: 'org.modelmapper', name: 'modelmapper', version: '2.3.5'
 
     /*room with rx*/
     implementation 'androidx.room:room-runtime:2.2.0'

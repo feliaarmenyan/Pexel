@@ -1,5 +1,6 @@
 package am.foursteps.pexel.data.remote.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -16,6 +17,9 @@ public class Image {
     private String photographer;
     @JsonProperty("src")
     private ImageSrc src;
+
+    @JsonIgnore
+    private boolean isFavorite;
 
     public int getWidth() {
         return width;
@@ -55,5 +59,13 @@ public class Image {
 
     public void setSrc(ImageSrc src) {
         this.src = src;
+    }
+
+    public boolean getIsFavorite() {
+        return isFavorite;
+    }
+
+    public void setIsFavorite(boolean favorite) {
+        isFavorite = favorite;
     }
 }

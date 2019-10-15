@@ -21,7 +21,7 @@ import am.foursteps.pexel.data.local.SizeData;
 import am.foursteps.pexel.data.remote.model.ImageSrc;
 import am.foursteps.pexel.databinding.BottomSheetBinding;
 import am.foursteps.pexel.ui.main.adapter.ChooseSizeAdapter;
-import am.foursteps.pexel.ui.main.adapter.PaginationAdapter;
+import am.foursteps.pexel.ui.main.adapter.ImageAdapter;
 import io.reactivex.SingleObserver;
 
 import static android.content.Context.DOWNLOAD_SERVICE;
@@ -42,7 +42,7 @@ public class BottomSheetSizeHelper {
     public BottomSheetSizeHelper() {
     }
 
-    public void ItemClich(Activity activity, LayoutInflater layoutInflater, PaginationAdapter paginationAdapter, Context context, int position, ImageSrc src) {
+    public void ItemClich(Activity activity, LayoutInflater layoutInflater, Context context, int position, ImageSrc src) {
 
 
         BottomSheetBinding mBinding = BottomSheetBinding.inflate(layoutInflater);
@@ -138,7 +138,7 @@ public class BottomSheetSizeHelper {
 //
 //                    @Override
 //                    public void onSuccess(Integer[] integers) {
-//                        paginationAdapter.updateItem(position, integers[1] - integers[0]);
+//                        imageAdapter.updateItem(position, integers[1] - integers[0]);
 //                        Timber.e("ok" + integers);
 //                        Toast.makeText(context, "okkkkkkkk", Toast.LENGTH_SHORT).show();
 //                    }
@@ -158,12 +158,12 @@ public class BottomSheetSizeHelper {
 //                @Override
 //                public void onTick(long millisUntilFinished) {
 //                    progress += 20;
-//                    paginationAdapter.updateItem(position, progress);
+//                    imageAdapter.updateItem(position, progress);
 //                }
 //
 //                @Override
 //                public void onFinish() {
-//                    paginationAdapter.updateItem(position, 100);
+//                    imageAdapter.updateItem(position, 100);
 //                    progress = 0;
 //                }
 //            };
