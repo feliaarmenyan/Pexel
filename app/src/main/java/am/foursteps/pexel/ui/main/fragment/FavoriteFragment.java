@@ -15,33 +15,29 @@ import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
 
 import am.foursteps.pexel.R;
 import am.foursteps.pexel.data.local.entity.FavoritePhotoEntity;
-import am.foursteps.pexel.data.remote.model.Image;
 import am.foursteps.pexel.databinding.FragmentFavoriteListBinding;
 import am.foursteps.pexel.factory.ViewModelFactory;
 import am.foursteps.pexel.ui.base.interfaces.OnRecyclerItemClickListener;
 import am.foursteps.pexel.ui.base.util.BottomSheetSizeHelper;
 import am.foursteps.pexel.ui.base.util.PhotoFullScreenHelper;
+import am.foursteps.pexel.ui.base.util.RxBus;
 import am.foursteps.pexel.ui.main.activity.MainActivity;
 import am.foursteps.pexel.ui.main.adapter.FavoriteAdapter;
 import am.foursteps.pexel.ui.main.viewmodel.MainViewModel;
 import dagger.android.support.AndroidSupportInjection;
 import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.processors.PublishProcessor;
 
 public class FavoriteFragment extends Fragment implements OnRecyclerItemClickListener {
 
 
     private FragmentFavoriteListBinding mBinding;
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
-
-    private PublishProcessor<Integer> paginator = PublishProcessor.create();
     private FavoriteAdapter mFavoriteAdapter;
     private LinearLayoutManager layoutManager;
     private List<FavoritePhotoEntity> mFavoritePhotoEntityList;
@@ -65,7 +61,7 @@ public class FavoriteFragment extends Fragment implements OnRecyclerItemClickLis
                              Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_favorite_list, container, false);
-//        mFavoritePhotoEntityList = new ArrayList<>();
+        mMainViewModel.fetchFavoriteList();
         return mBinding.getRoot();
     }
 
@@ -79,7 +75,7 @@ public class FavoriteFragment extends Fragment implements OnRecyclerItemClickLis
         layoutManager.setOrientation(RecyclerView.VERTICAL);
         mBinding.fragmentFavoriteRecyclerView.setLayoutManager(layoutManager);
         mBinding.fragmentFavoriteRecyclerView.setAdapter(mFavoriteAdapter);
-        mMainViewModel.fetchFavoriteList();
+//        mMainViewModel.fetchFavoriteList();
         mBinding.fragmentFavoriteSwipeRefresh.setOnRefreshListener(() -> {
             layoutManager.getInitialPrefetchItemCount();
             mBinding.fragmentFavoriteSwipeRefresh.postDelayed(() -> mBinding.fragmentFavoriteSwipeRefresh.setRefreshing(false), 500);
@@ -105,10 +101,22 @@ public class FavoriteFragment extends Fragment implements OnRecyclerItemClickLis
         switch (view.getId()) {
             case R.id.photo_image:
                 PhotoFullScreenHelper photoFullScreenHelper = new PhotoFullScreenHelper();
-                photoFullScreenHelper.fullScreen(requireFragmentManager(), view,((Image) item).getSrc());
+                photoFullScreenHelper.fullScreen(requireFragmentManager(), view, ((FavoritePhotoEntity) item).getImageSrc());
                 break;
             case R.id.item_paging_favorite:
-                mFavoriteAdapter.removeItem(position);
+                mMainViewModel.deleteFavorite(((FavoritePhotoEntity) item).getPrimaryKey());
+                mMainViewModel.getIsDelete().observe(this, success -> {
+                    mMainViewModel.getIsDelete().removeObservers(this);
+                    if (success) {
+                        mFavoriteAdapter.removeItem(position);
+                    } else {
+                        Toast.makeText(requireContext(), "Hargelis dzir coderd deleti", Toast.LENGTH_SHORT).show();
+                    }
+                });
+//publish subject mi tex set anem mi tex subject
+                requireActivity().runOnUiThread(()->
+                        RxBus.getInstance().publish(((FavoritePhotoEntity) item).getPrimaryKey())
+                );
                 break;
             case R.id.item_paging_share:
                 Intent sendIntent = new Intent();
@@ -119,7 +127,7 @@ public class FavoriteFragment extends Fragment implements OnRecyclerItemClickLis
                 break;
             case R.id.item_paging_download:
                 BottomSheetSizeHelper bottomSheetSizeHelper = new BottomSheetSizeHelper();
-                bottomSheetSizeHelper.ItemClich(requireActivity(), getLayoutInflater(), requireContext(), position, ((Image) item).getSrc());
+                bottomSheetSizeHelper.ItemClich(requireActivity(), getLayoutInflater(), requireContext(), position, ((FavoritePhotoEntity) item).getImageSrc());
                 break;
         }
     }

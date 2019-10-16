@@ -19,10 +19,7 @@ import am.foursteps.pexel.ui.main.viewholder.ItemViewHolder;
 
 public class FavoriteAdapter extends RecyclerBaseAdapter<FavoritePhotoEntity> {
     private List<FavoritePhotoEntity> items;
-    private ItemPaginationListBinding mBinding;
     private OnRecyclerItemClickListener<FavoritePhotoEntity> onRecyclerItemClickListener;
-    private ItemViewHolder mItemViewHolder;
-    private float mProgress;
 
 
     public FavoriteAdapter(OnRecyclerItemClickListener<FavoritePhotoEntity> onRecyclerItemClickListener) {
@@ -32,21 +29,15 @@ public class FavoriteAdapter extends RecyclerBaseAdapter<FavoritePhotoEntity> {
     }
 
     public void addItems(List<FavoritePhotoEntity> items) {
-        int startIndex = this.items.size();
-        this.items.addAll(items);
-        this.notifyItemRangeChanged(startIndex, items.size());
+      super.addItems(items);
     }
 
     public void updateItem(int position, float progress) {
-        FavoritePhotoEntity item = this.items.get(position);
-        mProgress = progress;
-        this.notifyItemChanged(position, item);
+       super.updateItem(position,progress);
     }
 
     public void removeItem(int position) {
-        items.remove(position);
-        this.notifyItemRemoved(position);
-        this.notifyItemRangeChanged(position, items.size());
+        super.removeItem(position);
     }
 
 
@@ -58,6 +49,19 @@ public class FavoriteAdapter extends RecyclerBaseAdapter<FavoritePhotoEntity> {
     }
 
     @Override
+    public void onBindData(RecyclerView.ViewHolder holder, FavoritePhotoEntity item, int position) {
+        ItemViewHolder itemViewHolder =  ((ItemViewHolder)holder);
+        ((ItemViewHolder) holder).bindEntity(item, true);
+        ViewCompat.setTransitionName(itemViewHolder.getBinding().photoImage, "Item" + holder.getAdapterPosition());
+
+        itemViewHolder.getBinding().itemPagingConstraint.setOnClickListener(view -> onRecyclerItemClickListener.onItemClicked(itemViewHolder.getBinding().itemPagingConstraint, item, holder.getAdapterPosition()));
+        itemViewHolder.getBinding().itemPagingFavorite.setOnClickListener(view -> onRecyclerItemClickListener.onItemClicked(itemViewHolder.getBinding().itemPagingFavorite, item, holder.getAdapterPosition()));
+        itemViewHolder.getBinding().itemPagingDownload.setOnClickListener(view -> onRecyclerItemClickListener.onItemClicked(itemViewHolder.getBinding().itemPagingDownload, item, holder.getAdapterPosition()));
+        itemViewHolder.getBinding().itemPagingShare.setOnClickListener(view -> onRecyclerItemClickListener.onItemClicked(itemViewHolder.getBinding().itemPagingShare, item, holder.getAdapterPosition()));
+        itemViewHolder.getBinding().photoImage.setOnClickListener(view -> onRecyclerItemClickListener.onItemClicked(itemViewHolder.getBinding().photoImage, item, holder.getAdapterPosition()));
+    }
+
+    @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
         if (!payloads.isEmpty() && payloads.get(0) != null) {
                 ((ItemViewHolder) holder).bindEntity((FavoritePhotoEntity) payloads.get(0), false);
@@ -66,17 +70,4 @@ public class FavoriteAdapter extends RecyclerBaseAdapter<FavoritePhotoEntity> {
         }
     }
 
-    @Override
-    public void onBindData(RecyclerView.ViewHolder holder, FavoritePhotoEntity item) {
-        mBinding = mItemViewHolder.getBinding();
-        mItemViewHolder = new ItemViewHolder(mBinding);
-        mItemViewHolder.bindEntity(item, true);
-        ViewCompat.setTransitionName(mBinding.photoImage, "Item" + holder.getAdapterPosition());
-
-        mBinding.itemPagingConstraint.setOnClickListener(view -> onRecyclerItemClickListener.onItemClicked(mBinding.itemPagingConstraint, item, holder.getAdapterPosition()));
-        mBinding.itemPagingFavorite.setOnClickListener(view -> onRecyclerItemClickListener.onItemClicked(mBinding.itemPagingFavorite, item, holder.getAdapterPosition()));
-        mBinding.itemPagingDownload.setOnClickListener(view -> onRecyclerItemClickListener.onItemClicked(mBinding.itemPagingDownload, item, holder.getAdapterPosition()));
-        mBinding.itemPagingShare.setOnClickListener(view -> onRecyclerItemClickListener.onItemClicked(mBinding.itemPagingShare, item, holder.getAdapterPosition()));
-        mBinding.photoImage.setOnClickListener(view -> onRecyclerItemClickListener.onItemClicked(mBinding.photoImage, item, holder.getAdapterPosition()));
-    }
 }

@@ -38,8 +38,8 @@ public class ItemViewHolder extends RecyclerView.ViewHolder {
        }
         }
 
-    public void bindFavoriteItemImage(Image paginationItem) {
-        if (!paginationItem.getIsFavorite()) {
+    public void bindFavoriteItemImage(Image image) {
+        if (!image.getIsFavorite()) {
             mBinding.itemPagingFavorite.setImageResource(R.drawable.ic_favorite_black);
         } else {
             mBinding.itemPagingFavorite.setImageResource(R.drawable.ic_favorite_red);

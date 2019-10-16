@@ -20,81 +20,89 @@ import am.foursteps.pexel.ui.base.interfaces.OnRecyclerItemClickListener;
 import am.foursteps.pexel.ui.base.util.ImageUrlHelper;
 import am.foursteps.pexel.ui.main.viewholder.ItemViewHolder;
 import am.foursteps.pexel.utils.DimensionUtils;
+import timber.log.Timber;
 
 public class ImageAdapter extends RecyclerBaseAdapter<Image> {
 
     private List<Image> items;
-    private ItemPaginationListBinding mBinding;
-    private OnRecyclerItemClickListener<Image> onRecyclerItemClickListener;
-    private ItemViewHolder mItemViewHolder;
-    private float mProgress;
 
 
     public ImageAdapter(OnRecyclerItemClickListener<Image> onRecyclerItemClickListener) {
         super(onRecyclerItemClickListener);
-        this.onRecyclerItemClickListener = onRecyclerItemClickListener;
         this.items = new ArrayList<>();
     }
 
     public String getUrl(int pos) {
-        return items.get(pos).getUrl();
+        return getItem(pos).getUrl();
     }
 
-
     public void addItems(List<Image> items) {
-        int startIndex = this.items.size();
-        this.items.addAll(items);
-        this.notifyItemRangeChanged(startIndex, items.size());
+      super.addItems(items);
     }
 
     public void updateItem(int position, float progress){
-        Image item = this.items.get(position);
-        mProgress = progress;
-        this.notifyItemChanged(position, item);
+       super.updateItem(position,progress);
     }
 
+
+    public void updateItem(String primaryKey){
+        int index=-1;
+        for (int i = 0; i < items.size(); i++) {
+            String key = items.get(i).getHeight() + "_" + items.get(i).getWidth() + "_" + items.get(i).getUrl();
+            if(key==primaryKey){
+                index = i;
+                break;
+            }
+        }
+        if(index!=-1){
+            super.updateItem(index, getItem(index),-1);
+        }
+    }
+
+
     public void updateItem(int position, Image image, float progress) {
-        this.items.set(position, image);
-        mProgress = progress;
-        this.notifyItemChanged(position, image);
+      super.updateItem(position,image,progress);
     }
 
     public void clearItems(){
-        items.clear();
-        this.notifyDataSetChanged();
+        super.clearItems();
     }
 
     @Override
     public RecyclerView.ViewHolder setViewHolder(ViewGroup parent) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-        ItemPaginationListBinding binding = DataBindingUtil.inflate(inflater, R.layout.item_pagination_list, parent, false);
+        ItemPaginationListBinding binding= DataBindingUtil.inflate(inflater, R.layout.item_pagination_list, parent, false);
         return new ItemViewHolder(binding);
     }
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
-        if(!payloads.isEmpty() && payloads.get(0)!=null){
-            if (mProgress < 0) {
+        if (!payloads.isEmpty() && payloads.get(0) != null) {
+            if (getProgress() < 0) {
                 ((ItemViewHolder) holder).bindFavoriteItemImage((Image) payloads.get(0));
             } else {
-                ((ItemViewHolder) holder).bindImage((Image) payloads.get(0),false);
+                ((ItemViewHolder) holder).bindImage((Image) payloads.get(0), false);
             }
+        } else {
+            super.onBindViewHolder(holder, position, payloads);
         }
-        super.onBindViewHolder(holder, position, payloads);
     }
 
     @Override
-    public void onBindData(RecyclerView.ViewHolder holder, Image item) {
-        mBinding = mItemViewHolder.getBinding();
-        mItemViewHolder = new ItemViewHolder(mBinding);
-        mItemViewHolder.bindImage(item,true);
-        ViewCompat.setTransitionName(mBinding.photoImage, "Item" + holder.getAdapterPosition());
+    public void onBindData(RecyclerView.ViewHolder holder, Image item, int position) {
+        ItemViewHolder itemViewHolder =  ((ItemViewHolder)holder);
+        itemViewHolder.bindImage(item,true);
+        ViewCompat.setTransitionName(itemViewHolder.getBinding().photoImage, "Item" + position);
 
-        mBinding.itemPagingConstraint.setOnClickListener(view -> onRecyclerItemClickListener.onItemClicked(mBinding.itemPagingConstraint, item, holder.getAdapterPosition()));
-        mBinding.itemPagingFavorite.setOnClickListener(view -> onRecyclerItemClickListener.onItemClicked(mBinding.itemPagingFavorite, item, holder.getAdapterPosition()));
-        mBinding.itemPagingDownload.setOnClickListener(view -> onRecyclerItemClickListener.onItemClicked(mBinding.itemPagingDownload, item, holder.getAdapterPosition()));
-        mBinding.itemPagingShare.setOnClickListener(view -> onRecyclerItemClickListener.onItemClicked(mBinding.itemPagingShare, item, holder.getAdapterPosition()));
-        mBinding.photoImage.setOnClickListener(view -> onRecyclerItemClickListener.onItemClicked(mBinding.photoImage, item, holder.getAdapterPosition()));
+        itemViewHolder.getBinding().itemPagingConstraint.setOnClickListener(view -> mOnRecyclerItemClickListener.onItemClicked(itemViewHolder.getBinding().itemPagingConstraint, item, position));
+        itemViewHolder.getBinding().itemPagingFavorite.setOnClickListener(view -> {
+            Timber.e("aaaaaaaaaaaaaaaaaaaaaaaaaaaa->"+position);
+
+            mOnRecyclerItemClickListener.onItemClicked(itemViewHolder.getBinding().itemPagingFavorite, item, position);
+        });
+        itemViewHolder.getBinding().itemPagingDownload.setOnClickListener(view -> mOnRecyclerItemClickListener.onItemClicked(itemViewHolder.getBinding().itemPagingDownload, item, position));
+        itemViewHolder.getBinding().itemPagingShare.setOnClickListener(view -> mOnRecyclerItemClickListener.onItemClicked(itemViewHolder.getBinding().itemPagingShare, item, position));
+        itemViewHolder.getBinding().photoImage.setOnClickListener(view -> mOnRecyclerItemClickListener.onItemClicked(itemViewHolder.getBinding().photoImage, item, position));
     }
 
 }

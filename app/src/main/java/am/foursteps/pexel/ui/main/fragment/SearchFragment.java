@@ -37,9 +37,11 @@ import am.foursteps.pexel.ui.main.activity.MainActivity;
 import am.foursteps.pexel.ui.main.adapter.ImageAdapter;
 import am.foursteps.pexel.ui.main.viewmodel.MainViewModel;
 import dagger.android.support.AndroidSupportInjection;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.processors.PublishProcessor;
+import io.reactivex.schedulers.Schedulers;
 import timber.log.Timber;
 
 public class SearchFragment extends Fragment implements OnRecyclerItemClickListener {
@@ -208,7 +210,7 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
                 photoFullScreenHelper.fullScreen(requireFragmentManager(), view, ((Image) item).getSrc());
                 break;
             case R.id.item_paging_favorite:
-                mImageAdapter.updateItem(position, -10);
+                mImageAdapter.updateItem(position, -10f);
                 break;
             case R.id.item_paging_share:
                 Intent sendIntent = new Intent();
@@ -226,27 +228,11 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
                         bottomSheetSizeHelper.ItemClich(requireActivity(), getLayoutInflater(), requireContext(), position, ((Image) item).getSrc());
                     }
                 });
-                RxBus.getInstance().listen().subscribe(new io.reactivex.Observer<Integer>() {
-                    @Override
-                    public void onSubscribe(Disposable d) {
-
-                    }
-
-                    @Override
-                    public void onNext(Integer integer) {
-                        mImageAdapter.updateItem(position, integer);
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-
-                    }
-
-                    @Override
-                    public void onComplete() {
-
-                    }
-                });
+                RxBus.getInstance()
+                        .listen()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(integer -> mImageAdapter.updateItem(position, (Integer)integer));
                 break;
         }
     }

@@ -39,9 +39,13 @@ import am.foursteps.pexel.ui.main.viewmodel.MainViewModel;
 import am.foursteps.pexel.utils.ActivityUtil;
 import dagger.android.support.AndroidSupportInjection;
 import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
 import io.reactivex.processors.PublishProcessor;
+import io.reactivex.schedulers.Schedulers;
+import timber.log.Timber;
 
 public class ListFragment extends Fragment implements OnRecyclerItemClickListener<Image> {
 
@@ -71,7 +75,6 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
         AndroidSupportInjection.inject(this);
         initialiseViewModel();
         setRetainInstance(true);
-
         super.onCreate(savedInstanceState);
     }
 
@@ -118,6 +121,15 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
         });
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        RxBus.getInstance()
+                .listen()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(item ->mImageAdapter.updateItem((String) item));
+    }
 
     @Override
     public void onDestroy() {
@@ -164,81 +176,6 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
         paginator.onNext(pageNumber);
     }
 
-//    PhotoWithSrc setFavoriteItemsData(Image image) {
-//        favoritePhotoEntity.setWidth(image.getWidth());
-//        favoritePhotoEntity.setHeight(image.getHeight());
-//        favoritePhotoEntity.setUrl(image.getUrl());
-//        favoritePhotoEntity.setIsFavorite(image.getIsFavorite());
-//        mPhotoSrcEntity.setSmall(image.getSrc().getSmall());
-//        mPhotoSrcEntity.setMedium(image.getSrc().getMedium());
-//        mPhotoSrcEntity.setLarge(image.getSrc().getLarge());
-//        mPhotoSrcEntity.setOriginal(image.getSrc().getOriginal());
-//        photoWithSrc.setPhotoSrcEntity(mPhotoSrcEntity);
-//        photoWithSrc.setFavoritePhotoEntity(favoritePhotoEntity);
-//        return photoWithSrc;
-//    }
-
-//
-//    @Override
-//    public void onItemClicked(View view, Object item, int position) {
-//        switch (view.getId()) {
-//            case R.id.photo_image:
-//                PhotoFullScreenHelper photoFullScreenHelper = new PhotoFullScreenHelper();
-//                photoFullScreenHelper.fullScreen(requireFragmentManager(), view, ((Image) item).getSrc());
-//                break;
-//            case R.id.item_paging_favorite:
-////                ((Image) item).setUrl(mImageAdapter.getUrl(position));
-////                ((Image) item).setSrc(mImageAdapter.getSrc(position));
-////                FavoritePhotoEntity favoritePhotoEntity=new FavoritePhotoEntity();
-////                PhotoSrcEntity mPhotoSrcEntity=new PhotoSrcEntity();
-////                favoritePhotoEntity.setUrl(mImageAdapter.getUrl(position));
-////                favoritePhotoEntity.setHeight(mImageAdapter.getHeight(position));
-////                favoritePhotoEntity.setWidth(mImageAdapter.getWidth(position));
-////                mPhotoSrcEntity.setOriginal(mImageAdapter.getSrc(position).getOriginal());
-////                mPhotoSrcEntity.setLarge(mImageAdapter.getSrc(position).getLarge());
-////                mPhotoSrcEntity.setMedium(mImageAdapter.getSrc(position).getMedium());
-////                mPhotoSrcEntity.setSmall(mImageAdapter.getSrc(position).getSmall());
-////                mImageAdapter.setFavoritePhotoEntity(position,favoritePhotoEntity);
-////                mImageAdapter.setPhotoSrcEntity(position,mPhotoSrcEntity);
-////                mMainViewModel = ViewModelProviders.of(this, viewModelFactory).get(MainViewModel.class);
-//                setFavoriteItemsData(((Image) item));
-//                if (((Image) item).getIsFavorite()) {
-////                    mMainViewModel.deleteFavorite(mImageAdapter.getFavoritePhotoEntity(position));
-//                    mMainViewModel.deleteFavorite(favoritePhotoEntity);
-//                    mMainViewModel.getIsDelete().observe(this, aBoolean -> {
-//                        mMainViewModel.getIsInsert().removeObservers(this);
-//                        if (aBoolean) {
-//                            ((Image) item).setIsFavorite(false);
-//                            mImageAdapter.updateItem(position, (Image)item,-10f);
-//                        } else {
-//                            Toast.makeText(requireContext(), "Exeption with delete like", Toast.LENGTH_SHORT).show();
-//                        }
-//
-//                    });
-//                } else {
-////                    mMainViewModel.insertFavorite(mImageAdapter.getPhotoSrcEntity(position), mImageAdapter.getFavoritePhotoEntity(position));
-//                    mMainViewModel.insertFavorite(mPhotoSrcEntity, favoritePhotoEntity);
-//                    mMainViewModel.getIsInsert().observe(this, aBoolean -> {
-//                        mMainViewModel.getIsInsert().removeObservers(this);
-//                        if (aBoolean) {
-//                            ((Image) item).setIsFavorite(true);
-////                            ((Image) item).setIsFavorite(true);
-//                            mImageAdapter.updateItem(position, (Image)item,-10f);
-//                        } else {
-//                            Toast.makeText(requireContext(), "Exeption with insert like", Toast.LENGTH_SHORT).show();
-//                        }
-//                    });
-//                }
-//
-////                if (mImageAdapter.getFavoriteStatus(position)) {
-//                break;
-//            case R.id.item_paging_share:
-//                Intent sendIntent = new Intent();
-//                sendIntent.setAction(Intent.ACTION_SEND);
-//                sendIntent.putExtra(Intent.EXTRA_TEXT, mImageAdapter.getUrl(position));
-//                sendIntent.setType("text/plain");
-//                startActivity(sendIntent);
-//                break;
 //            case R.id.item_paging_download:
 //                String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
 //                Permissions.check(requireContext(), permissions, null/*rationale*/, null/*options*/, new PermissionHandler() {
@@ -273,7 +210,7 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
 //        }
 //    }
 
-    private void setupItemFavorite(Image item, int position) {
+    private void setupItemFavorite(Image item, final int position) {
         String key = item.getHeight() + "_" + item.getWidth() + "_" + item.getUrl();
         if (!item.getIsFavorite()) {
             FavoritePhotoEntity favoritePhotoEntity = mModelMapper.map(item, FavoritePhotoEntity.class);
@@ -291,7 +228,7 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
         } else {
             mMainViewModel.deleteFavorite(key);
             mMainViewModel.getIsDelete().observe(this, success -> {
-                mMainViewModel.getIsInsert().removeObservers(this);
+                mMainViewModel.getIsDelete().removeObservers(this);
                 if (success) {
                     item.setIsFavorite(false);
                     mImageAdapter.updateItem(position, item, -1f);
@@ -325,30 +262,14 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
                     @Override
                     public void onGranted() {
                         BottomSheetSizeHelper bottomSheetSizeHelper = new BottomSheetSizeHelper();
-                        bottomSheetSizeHelper.ItemClich(requireActivity(), getLayoutInflater(), requireContext(), position, ((Image) item).getSrc());
+                        bottomSheetSizeHelper.ItemClich(requireActivity(), getLayoutInflater(), requireContext(), position,  item.getSrc());
                     }
                 });
-                RxBus.getInstance().listen().subscribe(new Observer<Integer>() {
-                    @Override
-                    public void onSubscribe(Disposable d) {
-
-                    }
-
-                    @Override
-                    public void onNext(Integer integer) {
-                        mImageAdapter.updateItem(position, integer);
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-
-                    }
-
-                    @Override
-                    public void onComplete() {
-
-                    }
-                });
+                RxBus.getInstance()
+                        .listen()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(integer -> mImageAdapter.updateItem(position, (Integer)integer));
                 break;
         }
 

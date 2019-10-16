@@ -11,6 +11,7 @@ import java.util.List;
 
 import am.foursteps.pexel.data.local.entity.FavoritePhotoEntity;
 import io.reactivex.Flowable;
+import io.reactivex.Single;
 
 
 @Dao
@@ -18,7 +19,7 @@ public interface FavoritePhotoDao {
 
     @Transaction
     @Query("SELECT * FROM favoritephotoentity")
-    Flowable<List<FavoritePhotoEntity>> getAll();
+    Single<List<FavoritePhotoEntity>> getAll();
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     long insert(FavoritePhotoEntity favoritePhotoEntity);

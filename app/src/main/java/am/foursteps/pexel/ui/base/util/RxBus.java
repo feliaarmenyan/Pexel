@@ -17,14 +17,14 @@ public class RxBus {
     private RxBus() {
     }
 
-    private PublishSubject<Integer> publisher = PublishSubject.create();
+    private PublishSubject<Object> publisher = PublishSubject.create();
 
-    void publish(Integer event) {
-        publisher.onNext(event);
+    public void publish(Object  object) {
+        publisher.onNext(object);
     }
 
     // Listen should return an Observable
-    public Observable<Integer> listen() {
+    public Observable<Object> listen() {
         return publisher;
     }
 }

@@ -23,8 +23,8 @@ public class MainViewModel extends BaseViewModel {
     private ApiRepository mApiRepository;
     private MutableLiveData<Resource<ApiResponse>> listLiveData = new MutableLiveData<>();
     private MutableLiveData<Resource<List<FavoritePhotoEntity>>> favoriteLiveData = new MutableLiveData<>();
-    private SingleLiveEvent<Boolean> isDelete = new SingleLiveEvent<>();
-    private SingleLiveEvent<Boolean> isInsert = new SingleLiveEvent<>();
+    private MutableLiveData<Boolean> isDelete = new MutableLiveData<>();
+    private MutableLiveData<Boolean> isInsert = new MutableLiveData<>();
 
 
     @Inject
@@ -53,11 +53,11 @@ public class MainViewModel extends BaseViewModel {
 
     @SuppressLint("CheckResult")
     public void fetchFavoriteList(){
-//        mApiRepository.getFavorites()
-////                .doOnSubscribe(this::addToDisposable)
-//                .subscribe(response -> {
-//                    getFavoriteListLiveData().postValue((Resource<List<PhotoWithSrc>>) response);
-//                });
+        mApiRepository.getFavorites()
+//                .doOnSubscribe(this::addToDisposable)
+                .subscribe(response -> {
+                    getFavoriteListLiveData().postValue((Resource<List<FavoritePhotoEntity>>) response);
+                });
     }
 
     @SuppressLint("CheckResult")
@@ -91,12 +91,12 @@ public class MainViewModel extends BaseViewModel {
         return favoriteLiveData;
     }
 
-    public SingleLiveEvent<Boolean> getIsDelete() {
+    public MutableLiveData<Boolean> getIsDelete() {
 
         return isDelete;
     }
 
-    public SingleLiveEvent<Boolean> getIsInsert() {
+    public MutableLiveData<Boolean> getIsInsert() {
         return isInsert;
     }
 
