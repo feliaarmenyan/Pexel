@@ -21,6 +21,9 @@ public class Image {
     @JsonIgnore
     private boolean isFavorite;
 
+    @JsonIgnore
+    private float downloadProgress = -1;
+
     public int getWidth() {
         return width;
     }
@@ -67,5 +70,13 @@ public class Image {
 
     public void setIsFavorite(boolean favorite) {
         isFavorite = favorite;
+    }
+
+    public float getDownloadProgress() {
+        return downloadProgress;
+    }
+
+    public void setDownloadProgress(float downloadProgress) {
+        this.downloadProgress = downloadProgress;
     }
 }

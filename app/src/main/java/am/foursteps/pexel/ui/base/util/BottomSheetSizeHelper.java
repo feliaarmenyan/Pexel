@@ -1,48 +1,49 @@
 package am.foursteps.pexel.ui.base.util;
 
-import android.app.Activity;
-import android.app.DownloadManager;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Environment;
 import android.view.LayoutInflater;
+import android.widget.Toast;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.downloader.Error;
+import com.downloader.OnDownloadListener;
+import com.downloader.PRDownloader;
+import com.downloader.Status;
+import com.downloader.internal.DownloadRequestQueue;
+import com.downloader.request.DownloadRequest;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 
-import java.io.File;
-import java.net.URL;
 import java.util.Date;
 
 import am.foursteps.pexel.R;
 import am.foursteps.pexel.data.local.SizeData;
-import am.foursteps.pexel.data.remote.model.ImageSrc;
+import am.foursteps.pexel.data.local.entity.FavoritePhotoEntity;
+import am.foursteps.pexel.data.local.rxevent.ProgressEvent;
+import am.foursteps.pexel.data.remote.model.Image;
 import am.foursteps.pexel.databinding.BottomSheetBinding;
 import am.foursteps.pexel.ui.main.adapter.ChooseSizeAdapter;
-import am.foursteps.pexel.ui.main.adapter.ImageAdapter;
-import io.reactivex.SingleObserver;
+import timber.log.Timber;
 
-import static android.content.Context.DOWNLOAD_SERVICE;
+import static com.downloader.Status.CANCELLED;
+import static com.downloader.Status.COMPLETED;
+import static com.downloader.Status.FAILED;
+import static com.downloader.Status.UNKNOWN;
 
 public class BottomSheetSizeHelper {
     private ChooseSizeAdapter mSizeAdapter;
 
-    private float progress = 0;
-    private String dirPath;
-    private String fileName;
-    private File file;
     private int photoSize = 0;
-    private URL url;
     private String mImageSrc;
-    SingleObserver<Integer> mObserver;
-
+    private int downloadId;
 
     public BottomSheetSizeHelper() {
     }
 
-    public void ItemClich(Activity activity, LayoutInflater layoutInflater, Context context, int position, ImageSrc src) {
+    public void ItemClick(LayoutInflater layoutInflater, Context context, int position, Object object) {
 
 
         BottomSheetBinding mBinding = BottomSheetBinding.inflate(layoutInflater);
@@ -73,113 +74,76 @@ public class BottomSheetSizeHelper {
 
         mBinding.bottomSheetChooseSizeDownloadButton.setOnClickListener(view12 -> {
             dialog.dismiss();
-
-            switch (photoSize) {
-                case 0:
-                    mImageSrc = src.getOriginal();
-                    break;
-                case 1:
-                    mImageSrc = src.getLarge();
-                    break;
-                case 2:
-                    mImageSrc = src.getMedium();
-                    break;
-                case 3:
-                    mImageSrc = src.getSmall();
+            if (object instanceof Image) {
+                Image image = (Image) object;
+                switch (photoSize) {
+                    case 0:
+                        mImageSrc = image.getSrc().getOriginal();
+                        break;
+                    case 1:
+                        mImageSrc = image.getSrc().getLarge();
+                        break;
+                    case 2:
+                        mImageSrc = image.getSrc().getMedium();
+                        break;
+                    case 3:
+                        mImageSrc = image.getSrc().getSmall();
+                }
+            }
+            if (object instanceof FavoritePhotoEntity) {
+                FavoritePhotoEntity entity = (FavoritePhotoEntity) object;
+                switch (photoSize) {
+                    case 0:
+                        mImageSrc = entity.getImageSrc().getOriginal();
+                        break;
+                    case 1:
+                        mImageSrc = entity.getImageSrc().getLarge();
+                        break;
+                    case 2:
+                        mImageSrc = entity.getImageSrc().getMedium();
+                        break;
+                    case 3:
+                        mImageSrc = entity.getImageSrc().getSmall();
+                }
             }
             Uri uri = Uri.parse(mImageSrc);
-//            mImageSrc="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4";
-            DownloadManager.Request request = new DownloadManager.Request(uri)
-                    .setDestinationInExternalPublicDir(
-                            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath(), new Date() + ".jpg")// Uri of the destination file
-                    .setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI | DownloadManager.Request.NETWORK_MOBILE)
-                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                    .setAllowedOverRoaming(true);// Set if download is allowed on roaming network
-
-            DownloadManager dm = (DownloadManager) activity.getSystemService(DOWNLOAD_SERVICE);
-
-            long downloadId = dm.enqueue(request);
-            new DownloadTread(downloadId, activity, dm).start();
-
-            DownloadManager.Query query = new DownloadManager.Query();
-            query.setFilterById(downloadId);
 
 
+             downloadId = PRDownloader.download(uri.toString(),
+                     Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath(),
+                     new Date() + ".jpg")
+                    .build()
+                    .setOnStartOrResumeListener(() -> {
+                        DownloadIds.getInstance().addDownloadId(downloadId);
+                        Timber.e("stat downloading");
+                    })
+                    .setOnProgressListener(progress -> {
+                        ProgressEvent event = new ProgressEvent();
+                        event.setProgress((float) progress.currentBytes / progress.totalBytes);
+                        event.setPosition(position);
+                        RxBus.getInstance().publishProgress(event);
+                    })
+                    .start(new OnDownloadListener() {
 
-//
-//                new SingleObserver<Integer>() {
-//                    @Override
-//                    public void onSubscribe(Disposable d) {
-//
-//                    }
-//
-//                    @Override
-//                    public void onSuccess(Integer integer) {
-//                        Toast.makeText(context,"eeeeeeeeeeee"+integer,Toast.LENGTH_SHORT).show();
-//
-//                    }
-//
-//                    @Override
-//                    public void onError(Throwable e) {
-//
-//                    }
-//                };
+                        @Override
+                        public void onDownloadComplete() {
+                           for(Integer item: DownloadIds.getInstance().getDownloadIds()){
+                               Status status = PRDownloader.getStatus(item);
+                               if(status == COMPLETED || status== CANCELLED || status==FAILED || status==UNKNOWN){
+                                   DownloadIds.getInstance().removeDownloadIds(item);
+                                   PRDownloader.cancel((int)item);
+                               }
+                           }
+//                            DownloadIds.getInstance().removeDownloadIds(downloadId);
+//                            Toast.makeText(context, "Download", Toast.LENGTH_SHORT).show();
+                        }
 
-
-
-//            public SingleObserver<int[]> getSingleObserver(){
-//                return new SingleObserver<Integer[]>() {
-//
-//                    @Override
-//                    public void onSubscribe(Disposable d) {
-//                        Toast.makeText(context, "subscibe", Toast.LENGTH_SHORT).show();
-//                        Timber.e("sybjr" + d.isDisposed());
-//                    }
-//
-//                    @Override
-//                    public void onSuccess(Integer[] integers) {
-//                        imageAdapter.updateItem(position, integers[1] - integers[0]);
-//                        Timber.e("ok" + integers);
-//                        Toast.makeText(context, "okkkkkkkk", Toast.LENGTH_SHORT).show();
-//                    }
-//
-//                    @Override
-//                    public void onError(Throwable e) {
-//                        Toast.makeText(context, "errrrrr", Toast.LENGTH_SHORT).show();
-//                        Timber.e("errorr" + e.getMessage());
-//                    }
-//                };
-//            }
-
-
-//            CountDownTimer mCountDownTimer;
-//            mCountDownTimer = new CountDownTimer(5000, 1000) {
-//
-//                @Override
-//                public void onTick(long millisUntilFinished) {
-//                    progress += 20;
-//                    imageAdapter.updateItem(position, progress);
-//                }
-//
-//                @Override
-//                public void onFinish() {
-//                    imageAdapter.updateItem(position, 100);
-//                    progress = 0;
-//                }
-//            };
-//            mCountDownTimer.start();
+                        @Override
+                        public void onError(Error error) {
+                            Timber.e(error.getServerErrorMessage());
+                        }
+                    });
 
         });
     }
-
-//    private String getfileExtension(Context context, Uri uri) {
-//        String extension;
-//        ContentResolver contentResolver = context.getContentResolver();
-//        MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
-//        extension = mimeTypeMap.getExtensionFromMimeType(contentResolver.getType(uri));
-//        return extension;
-//    }
-
-
-
 }

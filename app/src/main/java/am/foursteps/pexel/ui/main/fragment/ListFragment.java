@@ -16,6 +16,7 @@ import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.downloader.PRDownloader;
 import com.nabinbhandari.android.permissions.PermissionHandler;
 import com.nabinbhandari.android.permissions.Permissions;
 
@@ -28,6 +29,7 @@ import am.foursteps.pexel.data.local.def.AnimationType;
 import am.foursteps.pexel.data.local.entity.FavoritePhotoEntity;
 import am.foursteps.pexel.data.remote.model.Image;
 import am.foursteps.pexel.databinding.FragmentImageListBinding;
+import am.foursteps.pexel.di.module.DbModule;
 import am.foursteps.pexel.factory.ViewModelFactory;
 import am.foursteps.pexel.ui.base.interfaces.OnRecyclerItemClickListener;
 import am.foursteps.pexel.ui.base.util.BottomSheetSizeHelper;
@@ -38,14 +40,9 @@ import am.foursteps.pexel.ui.main.adapter.ImageAdapter;
 import am.foursteps.pexel.ui.main.viewmodel.MainViewModel;
 import am.foursteps.pexel.utils.ActivityUtil;
 import dagger.android.support.AndroidSupportInjection;
-import io.reactivex.Observer;
-import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Consumer;
 import io.reactivex.processors.PublishProcessor;
-import io.reactivex.schedulers.Schedulers;
-import timber.log.Timber;
 
 public class ListFragment extends Fragment implements OnRecyclerItemClickListener<Image> {
 
@@ -59,7 +56,6 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
     private final int VISIBLE_THRESHOLD = 4;
     private int lastVisibleItem, totalItemCount;
     private LinearLayoutManager layoutManager;
-    private FavoritePhotoEntity favoritePhotoEntity = new FavoritePhotoEntity();
 
 
     @Inject
@@ -74,8 +70,8 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
     public void onCreate(@Nullable Bundle savedInstanceState) {
         AndroidSupportInjection.inject(this);
         initialiseViewModel();
-        setRetainInstance(true);
         super.onCreate(savedInstanceState);
+        PRDownloader.cancelAll();
     }
 
 
@@ -105,6 +101,15 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
 
         bindingList.fragmentListToolbarFavoriteIcon.setOnClickListener(v -> ActivityUtil.pushFragment(new FavoriteFragment(), requireFragmentManager(), R.id.main_content, true, AnimationType.RIGHT_TO_LEFT));
         bindingList.fragmentListToolbarSearchIcon.setOnClickListener(v -> ActivityUtil.pushFragment(new SearchFragment(), requireFragmentManager(), R.id.main_content, true, AnimationType.RIGHT_TO_LEFT));
+
+        Disposable disposable = RxBus.getInstance()
+                .listenProgress()
+                .subscribe(progressEvent -> {
+                    if (mImageAdapter != null) {
+                        mImageAdapter.updateItem(progressEvent.getPosition(), progressEvent.getProgress());
+                    }
+                });
+        compositeDisposable.add(disposable);
     }
 
     private void initialiseViewModel() {
@@ -116,7 +121,6 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
             if (apiResponseResource.isSuccess()) {
                 mImageAdapter.addItems(apiResponseResource.data.getPhotos());
             } else {
-                Toast.makeText(requireContext(), "You are NOT connected to the Internet", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -124,11 +128,10 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
     @Override
     public void onResume() {
         super.onResume();
-        RxBus.getInstance()
-                .listen()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(item ->mImageAdapter.updateItem((String) item));
+        Disposable disposable = RxBus.getInstance()
+                .listenKey()
+                .subscribe(item -> mImageAdapter.updateItem(item));
+        compositeDisposable.add(disposable);
     }
 
     @Override
@@ -138,9 +141,6 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
         super.onDestroy();
     }
 
-    /**
-     * setting listener to get callback for load more
-     */
     private void setUpLoadMoreListener() {
         bindingList.imageList.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -161,9 +161,6 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
         });
     }
 
-    /**
-     * subscribing for data
-     */
     private void subscribeForData() {
         Disposable disposable = paginator
                 .onBackpressureDrop()
@@ -176,40 +173,6 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
         paginator.onNext(pageNumber);
     }
 
-//            case R.id.item_paging_download:
-//                String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
-//                Permissions.check(requireContext(), permissions, null/*rationale*/, null/*options*/, new PermissionHandler() {
-//                    @Override
-//                    public void onGranted() {
-//                        BottomSheetSizeHelper bottomSheetSizeHelper = new BottomSheetSizeHelper();
-//                        bottomSheetSizeHelper.ItemClich(requireActivity(), getLayoutInflater(), mImageAdapter, requireContext(), position, ((Image) item).getSrc());
-//                    }
-//                });
-//                RxBus.getInstance().listen().subscribe(new Observer<Integer>() {
-//                    @Override
-//                    public void onSubscribe(Disposable d) {
-//
-//                    }
-//
-//                    @Override
-//                    public void onNext(Integer integer) {
-//                        mImageAdapter.updateItem(position, integer);
-//                    }
-//
-//                    @Override
-//                    public void onError(Throwable e) {
-//
-//                    }
-//
-//                    @Override
-//                    public void onComplete() {
-//
-//                    }
-//                });
-//                break;
-//        }
-//    }
-
     private void setupItemFavorite(Image item, final int position) {
         String key = item.getHeight() + "_" + item.getWidth() + "_" + item.getUrl();
         if (!item.getIsFavorite()) {
@@ -220,9 +183,9 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
                 mMainViewModel.getIsInsert().removeObservers(this);
                 if (success) {
                     item.setIsFavorite(true);
-                    mImageAdapter.updateItem(position, item, -1f);
+                    mImageAdapter.updateItemImage(position, item);
                 } else {
-                    Toast.makeText(requireContext(), "Hargelis dzir coderd inserti", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), "Exception with insert in Code", Toast.LENGTH_SHORT).show();
                 }
             });
         } else {
@@ -231,9 +194,9 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
                 mMainViewModel.getIsDelete().removeObservers(this);
                 if (success) {
                     item.setIsFavorite(false);
-                    mImageAdapter.updateItem(position, item, -1f);
+                    mImageAdapter.updateItemImage(position, item);
                 } else {
-                    Toast.makeText(requireContext(), "Hargelis dzir coderd deleti", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), "Exception with delete in Code", Toast.LENGTH_SHORT).show();
                 }
             });
         }
@@ -244,7 +207,7 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
         switch (view.getId()) {
             case R.id.photo_image:
                 PhotoFullScreenHelper photoFullScreenHelper = new PhotoFullScreenHelper();
-                photoFullScreenHelper.fullScreen(requireFragmentManager(), view, ((Image) item).getSrc());
+                photoFullScreenHelper.fullScreen(requireFragmentManager(), view, item.getSrc());
                 break;
             case R.id.item_paging_favorite:
                 setupItemFavorite(item, position);
@@ -262,14 +225,9 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
                     @Override
                     public void onGranted() {
                         BottomSheetSizeHelper bottomSheetSizeHelper = new BottomSheetSizeHelper();
-                        bottomSheetSizeHelper.ItemClich(requireActivity(), getLayoutInflater(), requireContext(), position,  item.getSrc());
+                        bottomSheetSizeHelper.ItemClick(getLayoutInflater(), requireContext(), position, item);
                     }
                 });
-                RxBus.getInstance()
-                        .listen()
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(integer -> mImageAdapter.updateItem(position, (Integer)integer));
                 break;
         }
 

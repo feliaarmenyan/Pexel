@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import am.foursteps.pexel.data.remote.model.ImageSrc;
@@ -24,6 +25,9 @@ public class FavoritePhotoEntity {
     private String url;
 
     private ImageSrc ImageSrc;
+
+    @JsonIgnore
+    private float downloadProgress = -1;
 
     public FavoritePhotoEntity() {
     }
@@ -70,5 +74,13 @@ public class FavoritePhotoEntity {
 
     public void setImageSrc(ImageSrc imageSrc) {
         ImageSrc = imageSrc;
+    }
+
+    public float getDownloadProgress() {
+        return downloadProgress;
+    }
+
+    public void setDownloadProgress(float downloadProgress) {
+        this.downloadProgress = downloadProgress;
     }
 }

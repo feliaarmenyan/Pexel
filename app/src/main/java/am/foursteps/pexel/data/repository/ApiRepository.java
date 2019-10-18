@@ -13,7 +13,6 @@ import am.foursteps.pexel.data.remote.Resource;
 import am.foursteps.pexel.data.remote.api.ApiService;
 import am.foursteps.pexel.data.remote.model.ApiResponse;
 import am.foursteps.pexel.data.remote.model.Image;
-import io.reactivex.Flowable;
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
@@ -39,9 +38,7 @@ public class ApiRepository {
                 .flatMap(response -> Single.just(response == null
                         ? Resource.error("null result", new ApiResponse())
                         : Resource.success(response)))
-                .doOnError(t -> {
-                    Timber.e(t);
-                })
+                .doOnError(Timber::e)
                 .onErrorResumeNext(throwable -> Single.just(
                         Resource.error(throwable.getMessage(), new ApiResponse())))
                 .observeOn(AndroidSchedulers.mainThread());
@@ -67,9 +64,7 @@ public class ApiRepository {
                             return Single.just(Resource.success(response));
                         }
                 )
-                .doOnError(t -> {
-                    Timber.e(t);
-                })
+                .doOnError(Timber::e)
                 .observeOn(AndroidSchedulers.mainThread());
     }
 

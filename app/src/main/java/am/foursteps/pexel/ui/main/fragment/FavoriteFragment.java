@@ -15,7 +15,7 @@ import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.List;
+import com.downloader.PRDownloader;
 
 import javax.inject.Inject;
 
@@ -32,6 +32,7 @@ import am.foursteps.pexel.ui.main.adapter.FavoriteAdapter;
 import am.foursteps.pexel.ui.main.viewmodel.MainViewModel;
 import dagger.android.support.AndroidSupportInjection;
 import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
 
 public class FavoriteFragment extends Fragment implements OnRecyclerItemClickListener {
 
@@ -40,7 +41,6 @@ public class FavoriteFragment extends Fragment implements OnRecyclerItemClickLis
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
     private FavoriteAdapter mFavoriteAdapter;
     private LinearLayoutManager layoutManager;
-    private List<FavoritePhotoEntity> mFavoritePhotoEntityList;
 
     @Inject
     ViewModelFactory viewModelFactory;
@@ -51,7 +51,7 @@ public class FavoriteFragment extends Fragment implements OnRecyclerItemClickLis
     public void onCreate(@Nullable Bundle savedInstanceState) {
         AndroidSupportInjection.inject(this);
         initialiseViewModel();
-        setRetainInstance(true);
+        PRDownloader.cancelAll();
         super.onCreate(savedInstanceState);
     }
 
@@ -75,12 +75,20 @@ public class FavoriteFragment extends Fragment implements OnRecyclerItemClickLis
         layoutManager.setOrientation(RecyclerView.VERTICAL);
         mBinding.fragmentFavoriteRecyclerView.setLayoutManager(layoutManager);
         mBinding.fragmentFavoriteRecyclerView.setAdapter(mFavoriteAdapter);
-//        mMainViewModel.fetchFavoriteList();
         mBinding.fragmentFavoriteSwipeRefresh.setOnRefreshListener(() -> {
             layoutManager.getInitialPrefetchItemCount();
             mBinding.fragmentFavoriteSwipeRefresh.postDelayed(() -> mBinding.fragmentFavoriteSwipeRefresh.setRefreshing(false), 500);
         });
         mBinding.favoriteToolbar.setNavigationOnClickListener(v -> requireActivity().onBackPressed());
+
+        Disposable disposable = RxBus.getInstance()
+                .listenProgress()
+                .subscribe(progressEvent -> {
+                    if (mFavoriteAdapter != null) {
+                        mFavoriteAdapter.updateItem(progressEvent.getPosition(), progressEvent.getProgress());
+                    }
+                });
+        compositeDisposable.add(disposable);
     }
 
 
@@ -109,14 +117,12 @@ public class FavoriteFragment extends Fragment implements OnRecyclerItemClickLis
                     mMainViewModel.getIsDelete().removeObservers(this);
                     if (success) {
                         mFavoriteAdapter.removeItem(position);
+                        requireActivity().runOnUiThread(() ->
+                                RxBus.getInstance().publishKey(((FavoritePhotoEntity) item).getPrimaryKey()));
                     } else {
-                        Toast.makeText(requireContext(), "Hargelis dzir coderd deleti", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(requireContext(), "Error on Deleting", Toast.LENGTH_SHORT).show();
                     }
                 });
-//publish subject mi tex set anem mi tex subject
-                requireActivity().runOnUiThread(()->
-                        RxBus.getInstance().publish(((FavoritePhotoEntity) item).getPrimaryKey())
-                );
                 break;
             case R.id.item_paging_share:
                 Intent sendIntent = new Intent();
@@ -127,7 +133,7 @@ public class FavoriteFragment extends Fragment implements OnRecyclerItemClickLis
                 break;
             case R.id.item_paging_download:
                 BottomSheetSizeHelper bottomSheetSizeHelper = new BottomSheetSizeHelper();
-                bottomSheetSizeHelper.ItemClich(requireActivity(), getLayoutInflater(), requireContext(), position, ((FavoritePhotoEntity) item).getImageSrc());
+                bottomSheetSizeHelper.ItemClick(getLayoutInflater(), requireContext(), position,item);
                 break;
         }
     }

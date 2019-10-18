@@ -1,5 +1,7 @@
 package am.foursteps.pexel.ui.main.viewholder;
 
+import android.view.View;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -14,7 +16,6 @@ public class ItemViewHolder extends RecyclerView.ViewHolder {
 
     private ItemPaginationListBinding mBinding;
 
-
     public ItemPaginationListBinding getBinding() {
         return mBinding;
     }
@@ -24,7 +25,7 @@ public class ItemViewHolder extends RecyclerView.ViewHolder {
         mBinding = binding;
     }
    public void bindImage(Image image,boolean updateAll) {
-       if(updateAll) {
+       if (updateAll) {
            ImageUrlHelper.ImageUrl(mBinding.photoImage, image.getSrc());
            int maxHeight = DimensionUtils.getDisplayHeight(mBinding.getRoot().getContext()) * 2 / 3;
 
@@ -33,10 +34,18 @@ public class ItemViewHolder extends RecyclerView.ViewHolder {
                    / image.getWidth();
            mBinding.photoImage.getLayoutParams().height = Math.min(maxHeight, proportionalHeight);
            bindFavoriteItemImage(image);
-       }else{
-           //todo progress bar
+       } else {
+           if (image.getDownloadProgress() < 1) {
+               mBinding.itemPagingDownload.setVisibility(View.GONE);
+               mBinding.itemPagingProgressBar.setVisibility(View.VISIBLE);
+               mBinding.itemPagingProgressBar.setProgress((int) (image.getDownloadProgress() * 100));
+           } else {
+               mBinding.itemPagingDownload.setVisibility(View.VISIBLE);
+               mBinding.itemPagingProgressBar.setVisibility(View.GONE);
+               image.setDownloadProgress(-1);
+           }
        }
-        }
+   }
 
     public void bindFavoriteItemImage(Image image) {
         if (!image.getIsFavorite()) {
@@ -58,7 +67,15 @@ public class ItemViewHolder extends RecyclerView.ViewHolder {
             mBinding.photoImage.getLayoutParams().height = Math.min(maxHeight, proportionalHeight);
             bindFavoriteItemEntity(favoritePhotoEntity);
         }else{
-            //todo progress bar
+            if (favoritePhotoEntity.getDownloadProgress() < 1) {
+                mBinding.itemPagingDownload.setVisibility(View.GONE);
+                mBinding.itemPagingProgressBar.setVisibility(View.VISIBLE);
+                mBinding.itemPagingProgressBar.setProgress((int) (favoritePhotoEntity.getDownloadProgress() * 100));
+            } else {
+                mBinding.itemPagingDownload.setVisibility(View.VISIBLE);
+                mBinding.itemPagingProgressBar.setVisibility(View.GONE);
+                favoritePhotoEntity.setDownloadProgress(-1);
+            }
         }
     }
     public void bindFavoriteItemEntity(FavoritePhotoEntity favoritePhotoEntity) {

@@ -20,12 +20,16 @@ import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.downloader.PRDownloader;
 import com.nabinbhandari.android.permissions.PermissionHandler;
 import com.nabinbhandari.android.permissions.Permissions;
+
+import org.modelmapper.ModelMapper;
 
 import javax.inject.Inject;
 
 import am.foursteps.pexel.R;
+import am.foursteps.pexel.data.local.entity.FavoritePhotoEntity;
 import am.foursteps.pexel.data.remote.model.Image;
 import am.foursteps.pexel.databinding.FragmentSearchListBinding;
 import am.foursteps.pexel.factory.ViewModelFactory;
@@ -37,14 +41,12 @@ import am.foursteps.pexel.ui.main.activity.MainActivity;
 import am.foursteps.pexel.ui.main.adapter.ImageAdapter;
 import am.foursteps.pexel.ui.main.viewmodel.MainViewModel;
 import dagger.android.support.AndroidSupportInjection;
-import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.processors.PublishProcessor;
-import io.reactivex.schedulers.Schedulers;
 import timber.log.Timber;
 
-public class SearchFragment extends Fragment implements OnRecyclerItemClickListener {
+public class SearchFragment extends Fragment implements OnRecyclerItemClickListener<Image> {
 
 
     private FragmentSearchListBinding mBinding;
@@ -63,13 +65,16 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
     @Inject
     ViewModelFactory viewModelFactory;
 
+    @Inject
+    ModelMapper mModelMapper;
+
     private MainViewModel mMainViewModel;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         AndroidSupportInjection.inject(this);
         initialiseViewModel();
-        setRetainInstance(true);
+        PRDownloader.cancelAll();
         super.onCreate(savedInstanceState);
     }
 
@@ -82,7 +87,6 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
         subscribeForData();
         return mBinding.getRoot();
     }
-
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
@@ -130,9 +134,15 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
 
             }
         });
-
+        Disposable disposable = RxBus.getInstance()
+                .listenProgress()
+                .subscribe(progressEvent -> {
+                    if (mImageAdapter != null) {
+                        mImageAdapter.updateItem(progressEvent.getPosition(), progressEvent.getProgress());
+                    }
+                });
+        compositeDisposable.add(disposable);
     }
-
 
     private void initialiseViewModel() {
         mMainViewModel = ViewModelProviders.of(this, viewModelFactory).get(MainViewModel.class);
@@ -141,7 +151,6 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
             if (apiResponseResource.isSuccess()) {
                 mImageAdapter.addItems(apiResponseResource.data.getPhotos());
             } else {
-                Toast.makeText(requireContext(), "You are NOT search item", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -153,10 +162,6 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
         super.onDestroy();
     }
 
-
-    /**
-     * setting listener to get callback for load more
-     */
     private void setUpLoadMoreListener() {
         mBinding.fragmentSearchRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -182,9 +187,6 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
 
     }
 
-    /**
-     * subscribing for data
-     */
     private void subscribeForData() {
         Disposable disposable = paginator
                 .onBackpressureDrop()
@@ -200,17 +202,42 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
         paginator.onNext(pageNumber);
     }
 
-
+    private void setupItemFavorite(Image item, final int position) {
+        String key = item.getHeight() + "_" + item.getWidth() + "_" + item.getUrl();
+        if (!item.getIsFavorite()) {
+            FavoritePhotoEntity favoritePhotoEntity = mModelMapper.map(item, FavoritePhotoEntity.class);
+            favoritePhotoEntity.setPrimaryKey(key);
+            mMainViewModel.insertFavorite(favoritePhotoEntity);
+            mMainViewModel.getIsInsert().observe(this, success -> {
+                mMainViewModel.getIsInsert().removeObservers(this);
+                if (success) {
+                    item.setIsFavorite(true);
+                    mImageAdapter.updateItemImage(position, item);
+                } else {
+                }
+            });
+        } else {
+            mMainViewModel.deleteFavorite(key);
+            mMainViewModel.getIsDelete().observe(this, success -> {
+                mMainViewModel.getIsDelete().removeObservers(this);
+                if (success) {
+                    item.setIsFavorite(false);
+                    mImageAdapter.updateItemImage(position, item);
+                } else {
+                }
+            });
+        }
+    }
 
     @Override
-    public void onItemClicked(View view, Object item, int position) {
+    public void onItemClicked(View view, Image item, int position) {
         switch (view.getId()) {
             case R.id.photo_image:
                 PhotoFullScreenHelper photoFullScreenHelper = new PhotoFullScreenHelper();
                 photoFullScreenHelper.fullScreen(requireFragmentManager(), view, ((Image) item).getSrc());
                 break;
             case R.id.item_paging_favorite:
-                mImageAdapter.updateItem(position, -10f);
+                setupItemFavorite(item, position);
                 break;
             case R.id.item_paging_share:
                 Intent sendIntent = new Intent();
@@ -225,16 +252,9 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
                     @Override
                     public void onGranted() {
                         BottomSheetSizeHelper bottomSheetSizeHelper = new BottomSheetSizeHelper();
-                        bottomSheetSizeHelper.ItemClich(requireActivity(), getLayoutInflater(), requireContext(), position, ((Image) item).getSrc());
+                        bottomSheetSizeHelper.ItemClick(getLayoutInflater(), requireContext(), position, item);
                     }
                 });
-                RxBus.getInstance()
-                        .listen()
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(integer -> mImageAdapter.updateItem(position, (Integer)integer));
-                break;
         }
     }
-
 }

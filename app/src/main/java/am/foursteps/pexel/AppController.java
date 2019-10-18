@@ -3,6 +3,8 @@ package am.foursteps.pexel;
 import android.app.Activity;
 import android.app.Application;
 
+import com.downloader.PRDownloader;
+
 import javax.inject.Inject;
 
 import am.foursteps.pexel.di.component.DaggerApiComponent;
@@ -32,5 +34,8 @@ public class AppController extends Application implements HasActivityInjector {
                 .apiModule(new ApiModule())
                 .build()
                 .inject(this);
+
+        PRDownloader.initialize(getApplicationContext());
+
     }
 }

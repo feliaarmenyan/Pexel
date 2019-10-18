@@ -10,7 +10,6 @@ import androidx.room.Update;
 import java.util.List;
 
 import am.foursteps.pexel.data.local.entity.FavoritePhotoEntity;
-import io.reactivex.Flowable;
 import io.reactivex.Single;
 
 

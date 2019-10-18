@@ -15,7 +15,6 @@ import am.foursteps.pexel.data.remote.api.ApiService;
 import am.foursteps.pexel.data.remote.model.ApiResponse;
 import am.foursteps.pexel.data.repository.ApiRepository;
 import am.foursteps.pexel.ui.base.BaseViewModel;
-import am.foursteps.pexel.ui.base.LiveData.SingleLiveEvent;
 
 
 public class MainViewModel extends BaseViewModel {

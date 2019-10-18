@@ -33,7 +33,9 @@ public class FavoriteAdapter extends RecyclerBaseAdapter<FavoritePhotoEntity> {
     }
 
     public void updateItem(int position, float progress) {
-       super.updateItem(position,progress);
+        FavoritePhotoEntity favoritePhotoEntity = getItem(position);
+        favoritePhotoEntity.setDownloadProgress(progress);
+        super.updateItem(position, favoritePhotoEntity);
     }
 
     public void removeItem(int position) {
@@ -64,7 +66,7 @@ public class FavoriteAdapter extends RecyclerBaseAdapter<FavoritePhotoEntity> {
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
         if (!payloads.isEmpty() && payloads.get(0) != null) {
-                ((ItemViewHolder) holder).bindEntity((FavoritePhotoEntity) payloads.get(0), false);
+            ((ItemViewHolder) holder).bindEntity((FavoritePhotoEntity) payloads.get(payloads.size() - 1), false);
         }else {
             super.onBindViewHolder(holder, position, payloads);
         }

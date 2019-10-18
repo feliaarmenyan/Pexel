@@ -1,6 +1,5 @@
 package am.foursteps.pexel.ui.main.adapter;
 
-import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
@@ -12,9 +11,8 @@ import java.util.List;
 import am.foursteps.pexel.ui.base.interfaces.OnRecyclerItemClickListener;
 
 public abstract class RecyclerBaseAdapter<T> extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-    private List<T> items;
+    protected List<T> items;
     protected OnRecyclerItemClickListener<T> mOnRecyclerItemClickListener;
-    private float mProgress;
 
 
     public abstract RecyclerView.ViewHolder setViewHolder(ViewGroup parent);
@@ -32,17 +30,8 @@ public abstract class RecyclerBaseAdapter<T> extends RecyclerView.Adapter<Recycl
         this.notifyItemRangeChanged(startIndex, items.size());
     }
 
-
-
-    public void updateItem(int position, float progress) {
-        T item = this.items.get(position);
-        mProgress = progress;
-        this.notifyItemChanged(position, item);
-    }
-
-    public void updateItem(int position, T obj, float progress) {
+    public void updateItem(int position, T obj) {
         this.items.set(position, obj);
-        mProgress = progress;
         this.notifyItemChanged(position, obj);
     }
 
@@ -57,9 +46,6 @@ public abstract class RecyclerBaseAdapter<T> extends RecyclerView.Adapter<Recycl
         this.notifyDataSetChanged();
     }
 
-    public float getProgress() {
-        return mProgress;
-    }
 
     @NonNull
     @Override
