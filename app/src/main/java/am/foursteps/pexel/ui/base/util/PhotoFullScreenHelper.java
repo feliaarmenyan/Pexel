@@ -17,16 +17,16 @@ public class PhotoFullScreenHelper {
 
 
     public void fullScreen(FragmentManager fragmentManager, View view, ImageSrc src){
-        ItemFragment listFragment = ItemFragment.newInstance(src);
-        listFragment.setSharedElementEnterTransition(new DetailsTransition());
-        listFragment.setEnterTransition(new Fade());
-        listFragment.setExitTransition(new Fade());
-        listFragment.setSharedElementReturnTransition(new DetailsTransition());
+        ItemFragment itemFragment = ItemFragment.newInstance(src);
+        itemFragment.setSharedElementEnterTransition(new DetailsTransition());
+        itemFragment.setEnterTransition(new Fade());
+        itemFragment.setExitTransition(new Fade());
+        itemFragment.setSharedElementReturnTransition(new DetailsTransition());
 
         fragmentManager
                 .beginTransaction()
                 .addSharedElement(view, "image")
-                .replace(R.id.main_content, listFragment)
+                .replace(R.id.main_content, itemFragment)
                 .addToBackStack(null)
                 .commit();
     }

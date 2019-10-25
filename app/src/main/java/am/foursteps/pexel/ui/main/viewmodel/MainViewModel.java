@@ -53,7 +53,6 @@ public class MainViewModel extends BaseViewModel {
     @SuppressLint("CheckResult")
     public void fetchFavoriteList(){
         mApiRepository.getFavorites()
-//                .doOnSubscribe(this::addToDisposable)
                 .subscribe(response -> {
                     getFavoriteListLiveData().postValue((Resource<List<FavoritePhotoEntity>>) response);
                 });

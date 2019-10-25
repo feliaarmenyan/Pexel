@@ -34,8 +34,12 @@ public class ItemViewHolder extends RecyclerView.ViewHolder {
                    / image.getWidth();
            mBinding.photoImage.getLayoutParams().height = Math.min(maxHeight, proportionalHeight);
            bindFavoriteItemImage(image);
+
+           mBinding.itemPagingDownload.setVisibility(View.VISIBLE);
+           mBinding.itemPagingProgressBar.setVisibility(View.GONE);
+           image.setDownloadProgress(-1);
        } else {
-           if (image.getDownloadProgress() < 1) {
+           if (image.getDownloadProgress() < 1 && image.getDownloadProgress()>=0) {
                mBinding.itemPagingDownload.setVisibility(View.GONE);
                mBinding.itemPagingProgressBar.setVisibility(View.VISIBLE);
                mBinding.itemPagingProgressBar.setProgress((int) (image.getDownloadProgress() * 100));
@@ -54,7 +58,6 @@ public class ItemViewHolder extends RecyclerView.ViewHolder {
             mBinding.itemPagingFavorite.setImageResource(R.drawable.ic_favorite_red);
         }
     }
-
 
     public void bindEntity(FavoritePhotoEntity favoritePhotoEntity, boolean updateAll) {
         if(updateAll) {

@@ -28,7 +28,7 @@ public class ActivityUtil {
                 break;
         }
         if (addToBackStack) {
-            transaction.add(frameId, fragment, fragment.getClass().getSimpleName());
+            transaction.replace(frameId, fragment, fragment.getClass().getSimpleName());
             transaction.addToBackStack(fragment.getClass().getSimpleName());
         } else {
             transaction.replace(frameId, fragment, fragment.getClass().getSimpleName());

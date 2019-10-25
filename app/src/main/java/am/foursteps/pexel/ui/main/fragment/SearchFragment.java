@@ -10,7 +10,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -61,6 +60,7 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
     private LinearLayoutManager layoutManager;
     private String mSearchText;
 
+    private int clickedViewId;
 
     @Inject
     ViewModelFactory viewModelFactory;
@@ -69,6 +69,31 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
     ModelMapper mModelMapper;
 
     private MainViewModel mMainViewModel;
+    private TextWatcher mTextWatcher = new TextWatcher() {
+        @Override
+        public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            mBinding.fragmentListToolbarEditTextClose.setVisibility(View.GONE);
+        }
+
+        @Override
+        public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+        }
+
+        @Override
+        public void afterTextChanged(Editable editable) {
+            if (mBinding.fragmentListToolbarEditText.getText().toString().equals("")) {
+                mBinding.fragmentListToolbarEditTextClose.setVisibility(View.GONE);
+            } else {
+                mBinding.fragmentListToolbarEditTextClose.setVisibility(View.VISIBLE);
+            }
+            mImageAdapter.clearItems();
+            mSearchText = editable.toString();
+            pageNumber = 0;
+            mMainViewModel.fetchSearchPhotoList(mSearchText, 20, pageNumber);
+
+        }
+    };
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -79,12 +104,45 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        mBinding.fragmentListToolbarEditText.addTextChangedListener(mTextWatcher);
+
+        Disposable disposable = RxBus.getInstance()
+                .listenProgress()
+                .subscribe(progressEvent -> {
+                    if (mImageAdapter != null && mImageAdapter.getItemCount()>0) {
+                        mImageAdapter.updateItem(progressEvent.getPosition(), progressEvent.getProgress());
+                    }
+                });
+        compositeDisposable.add(disposable);
+    }
+
+    @Override
+    public void onPause() {
+        if (clickedViewId != R.id.photo_image) {
+        PRDownloader.cancelAll();
+        compositeDisposable.clear();
+    }
+        mBinding.fragmentListToolbarEditText.removeTextChangedListener(mTextWatcher);
+        super.onPause();
+    }
+
+    @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
-        mBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_search_list, container, false);
-        subscribeForData();
+        if (mBinding == null) {
+            mBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_search_list, container, false);
+            subscribeForData();
+            mImageAdapter = new ImageAdapter(this);
+            layoutManager = new LinearLayoutManager(requireContext());
+            layoutManager.setOrientation(RecyclerView.VERTICAL);
+            mBinding.fragmentSearchRecyclerView.setLayoutManager(layoutManager);
+            mBinding.fragmentSearchRecyclerView.setAdapter(mImageAdapter);
+            setUpLoadMoreListener();
+
+        }
         return mBinding.getRoot();
     }
 
@@ -92,62 +150,30 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ((MainActivity) requireActivity()).updateStatusBarColor("#034D59");
-        mImageAdapter = new ImageAdapter(this);
-        layoutManager = new LinearLayoutManager(requireContext());
-        layoutManager.setOrientation(RecyclerView.VERTICAL);
-        mBinding.fragmentSearchRecyclerView.setLayoutManager(layoutManager);
-        mBinding.fragmentSearchRecyclerView.setAdapter(mImageAdapter);
-        setUpLoadMoreListener();
-        mMainViewModel.fetchSearchPhotoList(mSearchText, 20, pageNumber);
+
         mBinding.fragmentSearchSwipeRefresh.setOnRefreshListener(() -> {
-            layoutManager.getInitialPrefetchItemCount();
-            mBinding.fragmentSearchSwipeRefresh.postDelayed(() -> mBinding.fragmentSearchSwipeRefresh.setRefreshing(false), 500);
+            mImageAdapter.clearItems();
+            pageNumber=0;
+            mMainViewModel.fetchSearchPhotoList(mSearchText, 20, pageNumber);
         });
 
         mBinding.fragmentListToolbarEditTextBack.setOnClickListener(v -> {
+            PRDownloader.cancelAll();
             mBinding.fragmentListToolbarEditText.getText().clear();
             final InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
             requireActivity().onBackPressed();
         });
         mBinding.fragmentListToolbarEditTextClose.setOnClickListener(view1 -> mBinding.fragmentListToolbarEditText.getText().clear());
-        mBinding.fragmentListToolbarEditText.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                mBinding.fragmentListToolbarEditTextClose.setVisibility(View.GONE);
-            }
-
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                if (mBinding.fragmentListToolbarEditText.getText().toString().equals("")) {
-                    mBinding.fragmentListToolbarEditTextClose.setVisibility(View.GONE);
-                } else {
-                    mBinding.fragmentListToolbarEditTextClose.setVisibility(View.VISIBLE);
-                }
-                mImageAdapter.clearItems();
-                mSearchText = charSequence.toString();
-                subscribeForData();
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) {
-
-            }
-        });
-        Disposable disposable = RxBus.getInstance()
-                .listenProgress()
-                .subscribe(progressEvent -> {
-                    if (mImageAdapter != null) {
-                        mImageAdapter.updateItem(progressEvent.getPosition(), progressEvent.getProgress());
-                    }
-                });
-        compositeDisposable.add(disposable);
     }
 
     private void initialiseViewModel() {
         mMainViewModel = ViewModelProviders.of(this, viewModelFactory).get(MainViewModel.class);
 
         mMainViewModel.getSearchListLiveData().observe(this, apiResponseResource -> {
+            if (mBinding.fragmentSearchSwipeRefresh.isRefreshing()) {
+                mBinding.fragmentSearchSwipeRefresh.setRefreshing(false);
+            }
             if (apiResponseResource.isSuccess()) {
                 mImageAdapter.addItems(apiResponseResource.data.getPhotos());
             } else {
@@ -156,7 +182,17 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
     }
 
     @Override
+    public void onStop() {
+        if (clickedViewId != R.id.photo_image) {
+            PRDownloader.cancelAll();
+            compositeDisposable.clear();
+        }
+        super.onStop();
+    }
+
+    @Override
     public void onDestroy() {
+        PRDownloader.cancelAll();
         compositeDisposable.clear();
         mMainViewModel.onStop();
         super.onDestroy();
@@ -183,8 +219,6 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
                 }
             }
         });
-
-
     }
 
     private void subscribeForData() {
@@ -231,6 +265,7 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
 
     @Override
     public void onItemClicked(View view, Image item, int position) {
+        clickedViewId = view.getId();
         switch (view.getId()) {
             case R.id.photo_image:
                 PhotoFullScreenHelper photoFullScreenHelper = new PhotoFullScreenHelper();

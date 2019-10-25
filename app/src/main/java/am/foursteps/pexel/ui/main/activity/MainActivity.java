@@ -39,7 +39,6 @@ public class MainActivity extends AppCompatActivity implements HasSupportFragmen
         window.setStatusBarColor(Color.parseColor(color));
     }
 
-
     @Override
     public AndroidInjector<Fragment> supportFragmentInjector() {
         return dispatchingAndroidInjector;

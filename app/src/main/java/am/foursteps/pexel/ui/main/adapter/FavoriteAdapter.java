@@ -18,14 +18,12 @@ import am.foursteps.pexel.ui.base.interfaces.OnRecyclerItemClickListener;
 import am.foursteps.pexel.ui.main.viewholder.ItemViewHolder;
 
 public class FavoriteAdapter extends RecyclerBaseAdapter<FavoritePhotoEntity> {
-    private List<FavoritePhotoEntity> items;
     private OnRecyclerItemClickListener<FavoritePhotoEntity> onRecyclerItemClickListener;
 
 
     public FavoriteAdapter(OnRecyclerItemClickListener<FavoritePhotoEntity> onRecyclerItemClickListener) {
         super(onRecyclerItemClickListener);
         this.onRecyclerItemClickListener = onRecyclerItemClickListener;
-        items = new ArrayList<>();
     }
 
     public void addItems(List<FavoritePhotoEntity> items) {

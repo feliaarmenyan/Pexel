@@ -12,11 +12,10 @@ public final class SizeData {
     private static List<Sizes> sItems = new ArrayList<>();
 
     static {
-        sItems.add(new Sizes(R.drawable.ic_check, "Original (3984 x 2656)"));
-        sItems.add(new Sizes(R.drawable.ic_check_box, "Large (1920 x 1280)"));
-        sItems.add(new Sizes(R.drawable.ic_check_box, "Medium (1280 x 853)"));
-        sItems.add(new Sizes(R.drawable.ic_check_box, "Small (640 x 426)"));
-
+        sItems.add(new Sizes(R.drawable.ic_check, "Original "));
+        sItems.add(new Sizes(R.drawable.ic_check_box, "Large (650 x 940)"));
+        sItems.add(new Sizes(R.drawable.ic_check_box, "Medium (350 x 400)"));
+        sItems.add(new Sizes(R.drawable.ic_check_box, "Small (130 x 200)"));
     }
 
     public static SizeData getInstance() {
@@ -43,7 +42,7 @@ public final class SizeData {
             mCheckIcon = checkIcon;
         }
 
-        Sizes(int checkIcon, String size) {
+        public Sizes(int checkIcon, String size) {
             mCheckIcon = checkIcon;
             mSize = size;
         }

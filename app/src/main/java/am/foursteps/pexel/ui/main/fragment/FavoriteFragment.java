@@ -1,5 +1,6 @@
 package am.foursteps.pexel.ui.main.fragment;
 
+import android.Manifest;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -16,6 +17,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.downloader.PRDownloader;
+import com.nabinbhandari.android.permissions.PermissionHandler;
+import com.nabinbhandari.android.permissions.Permissions;
 
 import javax.inject.Inject;
 
@@ -25,6 +28,7 @@ import am.foursteps.pexel.databinding.FragmentFavoriteListBinding;
 import am.foursteps.pexel.factory.ViewModelFactory;
 import am.foursteps.pexel.ui.base.interfaces.OnRecyclerItemClickListener;
 import am.foursteps.pexel.ui.base.util.BottomSheetSizeHelper;
+import am.foursteps.pexel.ui.base.util.DownloadIds;
 import am.foursteps.pexel.ui.base.util.PhotoFullScreenHelper;
 import am.foursteps.pexel.ui.base.util.RxBus;
 import am.foursteps.pexel.ui.main.activity.MainActivity;
@@ -36,11 +40,12 @@ import io.reactivex.disposables.Disposable;
 
 public class FavoriteFragment extends Fragment implements OnRecyclerItemClickListener {
 
-
     private FragmentFavoriteListBinding mBinding;
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
     private FavoriteAdapter mFavoriteAdapter;
     private LinearLayoutManager layoutManager;
+
+    private int clickedViewId;
 
     @Inject
     ViewModelFactory viewModelFactory;
@@ -51,51 +56,60 @@ public class FavoriteFragment extends Fragment implements OnRecyclerItemClickLis
     public void onCreate(@Nullable Bundle savedInstanceState) {
         AndroidSupportInjection.inject(this);
         initialiseViewModel();
-        PRDownloader.cancelAll();
         super.onCreate(savedInstanceState);
     }
 
-
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_favorite_list, container, false);
-        mMainViewModel.fetchFavoriteList();
+        if (mBinding == null) {
+            mBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_favorite_list, container, false);
+            mMainViewModel.fetchFavoriteList();
+            mFavoriteAdapter = new FavoriteAdapter(this);
+            layoutManager = new LinearLayoutManager(requireContext());
+            layoutManager.setOrientation(RecyclerView.VERTICAL);
+            mBinding.fragmentFavoriteRecyclerView.setLayoutManager(layoutManager);
+            mBinding.fragmentFavoriteRecyclerView.setAdapter(mFavoriteAdapter);
+        }
         return mBinding.getRoot();
     }
 
-
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        ((MainActivity) requireActivity()).updateStatusBarColor("#034D59");
-        mFavoriteAdapter = new FavoriteAdapter(this);
-        layoutManager = new LinearLayoutManager(requireContext());
-        layoutManager.setOrientation(RecyclerView.VERTICAL);
-        mBinding.fragmentFavoriteRecyclerView.setLayoutManager(layoutManager);
-        mBinding.fragmentFavoriteRecyclerView.setAdapter(mFavoriteAdapter);
-        mBinding.fragmentFavoriteSwipeRefresh.setOnRefreshListener(() -> {
-            layoutManager.getInitialPrefetchItemCount();
-            mBinding.fragmentFavoriteSwipeRefresh.postDelayed(() -> mBinding.fragmentFavoriteSwipeRefresh.setRefreshing(false), 500);
-        });
-        mBinding.favoriteToolbar.setNavigationOnClickListener(v -> requireActivity().onBackPressed());
-
+    public void onResume() {
+        super.onResume();
         Disposable disposable = RxBus.getInstance()
                 .listenProgress()
                 .subscribe(progressEvent -> {
-                    if (mFavoriteAdapter != null) {
+                    if (mFavoriteAdapter != null && mFavoriteAdapter.getItemCount() > 0) {
                         mFavoriteAdapter.updateItem(progressEvent.getPosition(), progressEvent.getProgress());
                     }
                 });
         compositeDisposable.add(disposable);
     }
 
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        ((MainActivity) requireActivity()).updateStatusBarColor("#034D59");
+
+        mBinding.fragmentFavoriteSwipeRefresh.setOnRefreshListener(() -> {
+            mBinding.fragmentFavoriteSwipeRefresh.postDelayed(() -> mBinding.fragmentFavoriteSwipeRefresh.setRefreshing(false), 500);
+            mFavoriteAdapter.clearItems();
+            mMainViewModel.fetchFavoriteList();
+        });
+        mBinding.favoriteToolbar.setNavigationOnClickListener(v -> {
+            PRDownloader.cancelAll();
+            requireActivity().onBackPressed();
+        });
+    }
 
     private void initialiseViewModel() {
         mMainViewModel = ViewModelProviders.of(this, viewModelFactory).get(MainViewModel.class);
 
         mMainViewModel.getFavoriteListLiveData().observe(this, resource -> {
+            if (mBinding.fragmentFavoriteSwipeRefresh.isRefreshing()) {
+                mBinding.fragmentFavoriteSwipeRefresh.setRefreshing(false);
+            }
             if (resource.isSuccess()) {
                 mFavoriteAdapter.addItems(resource.data);
             } else {
@@ -106,12 +120,17 @@ public class FavoriteFragment extends Fragment implements OnRecyclerItemClickLis
 
     @Override
     public void onItemClicked(View view, Object item, int position) {
+        clickedViewId = view.getId();
         switch (view.getId()) {
             case R.id.photo_image:
                 PhotoFullScreenHelper photoFullScreenHelper = new PhotoFullScreenHelper();
                 photoFullScreenHelper.fullScreen(requireFragmentManager(), view, ((FavoritePhotoEntity) item).getImageSrc());
                 break;
             case R.id.item_paging_favorite:
+                int downloadId = DownloadIds.getInstance().getDownloadId(position);
+                if (downloadId != -1) {
+                    PRDownloader.cancel(downloadId);
+                }
                 mMainViewModel.deleteFavorite(((FavoritePhotoEntity) item).getPrimaryKey());
                 mMainViewModel.getIsDelete().observe(this, success -> {
                     mMainViewModel.getIsDelete().removeObservers(this);
@@ -132,16 +151,41 @@ public class FavoriteFragment extends Fragment implements OnRecyclerItemClickLis
                 startActivity(sendIntent);
                 break;
             case R.id.item_paging_download:
-                BottomSheetSizeHelper bottomSheetSizeHelper = new BottomSheetSizeHelper();
-                bottomSheetSizeHelper.ItemClick(getLayoutInflater(), requireContext(), position,item);
+                String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+                Permissions.check(requireContext(), permissions, null/*rationale*/, null/*options*/, new PermissionHandler() {
+                    @Override
+                    public void onGranted() {
+                        BottomSheetSizeHelper bottomSheetSizeHelper = new BottomSheetSizeHelper();
+                        bottomSheetSizeHelper.ItemClick(getLayoutInflater(), requireContext(), position, item);
+                    }
+                });
                 break;
         }
     }
 
     @Override
+    public void onPause() {
+        if (clickedViewId != R.id.photo_image) {
+            PRDownloader.cancelAll();
+            compositeDisposable.clear();
+        }
+        super.onPause();
+    }
+
+    @Override
     public void onStop() {
-        compositeDisposable.clear();
+        if (clickedViewId != R.id.photo_image) {
+            PRDownloader.cancelAll();
+            compositeDisposable.clear();
+        }
         super.onStop();
     }
 
+    @Override
+    public void onDestroy() {
+        PRDownloader.cancelAll();
+        compositeDisposable.clear();
+        mMainViewModel.onStop();
+        super.onDestroy();
+    }
 }

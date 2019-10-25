@@ -51,6 +51,7 @@
                 android:id="@+id/fragment_favorite_recyclerView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@color/colorBlack90"
                 android:clipChildren="false" />
         </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
     </androidx.coordinatorlayout.widget.CoordinatorLayout>

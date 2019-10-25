@@ -35,9 +35,20 @@ public class ApiRepository {
 
         return mApiService.searchPhotos(query, perPage, page)
                 .subscribeOn(Schedulers.io())
-                .flatMap(response -> Single.just(response == null
-                        ? Resource.error("null result", new ApiResponse())
-                        : Resource.success(response)))
+                .flatMap(response -> {
+                    List<Image> imageList = response.getPhotos();
+                    List<FavoritePhotoEntity> photoEntityList = mFavoritePhotoDao.getAll().blockingGet();
+                    for (Image image : imageList) {
+                        String key = image.getHeight() + "_" + image.getWidth() + "_" + image.getUrl();
+                        for (int i = 0; i < photoEntityList.size(); i++) {
+                            if (photoEntityList.get(i).getPrimaryKey().equals(key)) {
+                                image.setIsFavorite(true);
+                            }
+                        }
+                    }
+                    response.setPhotos(imageList);
+                    return Single.just(Resource.success(response));
+                })
                 .doOnError(Timber::e)
                 .onErrorResumeNext(throwable -> Single.just(
                         Resource.error(throwable.getMessage(), new ApiResponse())))
@@ -65,6 +76,8 @@ public class ApiRepository {
                         }
                 )
                 .doOnError(Timber::e)
+                .onErrorResumeNext(throwable -> Single.just(
+                        Resource.error(throwable.getMessage(), new ApiResponse())))
                 .observeOn(AndroidSchedulers.mainThread());
     }
 

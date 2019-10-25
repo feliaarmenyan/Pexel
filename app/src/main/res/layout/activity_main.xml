@@ -6,5 +6,6 @@
         android:id="@+id/main_content"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@color/colorBlack90"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 </layout>

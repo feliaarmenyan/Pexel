@@ -2,7 +2,6 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-
     <FrameLayout
         android:id="@+id/fragment_item_constraint"
         android:layout_width="match_parent"
@@ -16,7 +15,7 @@
             android:id="@+id/imageView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scaleType="centerCrop"
+            android:layout_gravity="center"
             android:transitionName="image"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
@@ -30,58 +29,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:navigationIcon="@drawable/ic_back" />
-
-        <!--        <ImageView-->
-        <!--            android:id="@+id/fragment_item_download"-->
-        <!--            android:layout_width="wrap_content"-->
-        <!--            android:layout_height="wrap_content"-->
-        <!--            android:layout_marginEnd="8dp"-->
-        <!--            android:padding="4dp"-->
-        <!--            android:src="@drawable/ic_download"-->
-        <!--            app:layout_constraintBottom_toBottomOf="@+id/fragment_item_share"-->
-        <!--            app:layout_constraintEnd_toStartOf="@+id/fragment_item_share"-->
-        <!--            app:layout_constraintTop_toTopOf="@+id/fragment_item_share" />-->
-
-        <!--        <ImageView-->
-        <!--            android:id="@+id/fragment_item_share"-->
-        <!--            android:layout_width="wrap_content"-->
-        <!--            android:layout_height="wrap_content"-->
-        <!--            android:layout_marginEnd="8dp"-->
-        <!--            android:padding="4dp"-->
-        <!--            android:src="@drawable/ic_share"-->
-        <!--            app:layout_constraintBottom_toBottomOf="@+id/fragment_item_favorite"-->
-        <!--            app:layout_constraintEnd_toStartOf="@+id/fragment_item_favorite"-->
-        <!--            app:layout_constraintTop_toTopOf="@+id/fragment_item_favorite" />-->
-
-        <!--        <ImageView-->
-        <!--            android:id="@+id/fragment_item_favorite"-->
-        <!--            android:layout_width="wrap_content"-->
-        <!--            android:layout_height="wrap_content"-->
-        <!--            android:layout_marginTop="8dp"-->
-        <!--            android:layout_marginEnd="16dp"-->
-        <!--            android:layout_marginBottom="8dp"-->
-        <!--            android:padding="4dp"-->
-        <!--            android:src="@drawable/ic_favorite"-->
-        <!--            app:layout_constraintBottom_toBottomOf="parent"-->
-        <!--            app:layout_constraintEnd_toEndOf="parent"-->
-        <!--            app:layout_constraintTop_toBottomOf="@+id/imageView"-->
-        <!--            app:layout_constraintVertical_bias="0.00999999" />-->
-
-
-        <!--        <de.hdodenhof.circleimageview.CircleImageView-->
-        <!--            android:id="@+id/fragment_item_circleImage"-->
-        <!--            android:layout_width="36dp"-->
-        <!--            android:layout_height="36dp"-->
-        <!--            android:layout_marginStart="16dp"-->
-        <!--            android:layout_marginTop="8dp"-->
-        <!--            android:layout_marginBottom="8dp"-->
-        <!--            android:src="@mipmap/ic_launcher"-->
-        <!--            app:layout_constraintBottom_toBottomOf="parent"-->
-        <!--            app:layout_constraintStart_toStartOf="parent"-->
-        <!--            app:layout_constraintTop_toBottomOf="@+id/imageView"-->
-        <!--            app:layout_constraintVertical_bias="0.0" />-->
-
+            app:navigationIcon="@drawable/ic_back"/>
 
     </FrameLayout>
 </layout>

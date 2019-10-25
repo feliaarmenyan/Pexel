@@ -29,7 +29,6 @@ import am.foursteps.pexel.data.local.def.AnimationType;
 import am.foursteps.pexel.data.local.entity.FavoritePhotoEntity;
 import am.foursteps.pexel.data.remote.model.Image;
 import am.foursteps.pexel.databinding.FragmentImageListBinding;
-import am.foursteps.pexel.di.module.DbModule;
 import am.foursteps.pexel.factory.ViewModelFactory;
 import am.foursteps.pexel.ui.base.interfaces.OnRecyclerItemClickListener;
 import am.foursteps.pexel.ui.base.util.BottomSheetSizeHelper;
@@ -48,7 +47,8 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
 
 
     private FragmentImageListBinding bindingList;
-    private CompositeDisposable compositeDisposable = new CompositeDisposable();
+    private CompositeDisposable downloadDisposable = new CompositeDisposable();
+    private CompositeDisposable favoriteDisposable = new CompositeDisposable();
     private PublishProcessor<Integer> paginator = PublishProcessor.create();
     private ImageAdapter mImageAdapter;
     private boolean loading = false;
@@ -57,6 +57,8 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
     private int lastVisibleItem, totalItemCount;
     private LinearLayoutManager layoutManager;
 
+    //todo mtacel aveli lavy
+    private int clickedViewId;
 
     @Inject
     ViewModelFactory viewModelFactory;
@@ -69,17 +71,23 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         AndroidSupportInjection.inject(this);
-        initialiseViewModel();
         super.onCreate(savedInstanceState);
-        PRDownloader.cancelAll();
+        initialiseViewModel();
     }
-
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        bindingList = DataBindingUtil.inflate(inflater, R.layout.fragment_image_list, container, false);
-        subscribeForData();
+        if (bindingList == null) {
+            bindingList = DataBindingUtil.inflate(inflater, R.layout.fragment_image_list, container, false);
+            subscribeForData();
+            mImageAdapter = new ImageAdapter(this);
+            layoutManager = new LinearLayoutManager(requireContext());
+            bindingList.imageList.setLayoutManager(layoutManager);
+            bindingList.imageList.setAdapter(mImageAdapter);
+            setUpLoadMoreListener();
+            mMainViewModel.fetchPhotoList(20, pageNumber);
+        }
         return bindingList.getRoot();
     }
 
@@ -87,29 +95,23 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ((MainActivity) requireActivity()).updateStatusBarColor("#034D59");
-        mImageAdapter = new ImageAdapter(this);
-        layoutManager = new LinearLayoutManager(requireContext());
-        bindingList.imageList.setLayoutManager(layoutManager);
-        bindingList.imageList.setAdapter(mImageAdapter);
-        setUpLoadMoreListener();
-        mMainViewModel.fetchPhotoList(20, pageNumber);
 
         bindingList.fragmentListSwipeRefresh.setOnRefreshListener(() -> {
-            layoutManager.getInitialPrefetchItemCount();
-            bindingList.fragmentListSwipeRefresh.postDelayed(() -> bindingList.fragmentListSwipeRefresh.setRefreshing(false), 500);
+            mImageAdapter.clearItems();
+            pageNumber = 0;
+            mMainViewModel.fetchPhotoList(20, pageNumber);
         });
 
-        bindingList.fragmentListToolbarFavoriteIcon.setOnClickListener(v -> ActivityUtil.pushFragment(new FavoriteFragment(), requireFragmentManager(), R.id.main_content, true, AnimationType.RIGHT_TO_LEFT));
-        bindingList.fragmentListToolbarSearchIcon.setOnClickListener(v -> ActivityUtil.pushFragment(new SearchFragment(), requireFragmentManager(), R.id.main_content, true, AnimationType.RIGHT_TO_LEFT));
-
-        Disposable disposable = RxBus.getInstance()
-                .listenProgress()
-                .subscribe(progressEvent -> {
-                    if (mImageAdapter != null) {
-                        mImageAdapter.updateItem(progressEvent.getPosition(), progressEvent.getProgress());
-                    }
-                });
-        compositeDisposable.add(disposable);
+        bindingList.fragmentListToolbarFavoriteIcon.setOnClickListener(v -> {
+            PRDownloader.cancelAll();
+            clickedViewId = 0;
+            ActivityUtil.pushFragment(new FavoriteFragment(), requireFragmentManager(), R.id.main_content, true, AnimationType.RIGHT_TO_LEFT);
+        });
+        bindingList.fragmentListToolbarSearchIcon.setOnClickListener(v -> {
+            PRDownloader.cancelAll();
+            clickedViewId = 0;
+            ActivityUtil.pushFragment(new SearchFragment(), requireFragmentManager(), R.id.main_content, true, AnimationType.RIGHT_TO_LEFT);
+        });
     }
 
     private void initialiseViewModel() {
@@ -118,6 +120,9 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
         mMainViewModel.getListLiveData().observe(this, apiResponseResource -> {
             loading = false;
             bindingList.fragmentListProgressBar.setVisibility(View.INVISIBLE);
+            if (bindingList.fragmentListSwipeRefresh.isRefreshing()) {
+                bindingList.fragmentListSwipeRefresh.setRefreshing(false);
+            }
             if (apiResponseResource.isSuccess()) {
                 mImageAdapter.addItems(apiResponseResource.data.getPhotos());
             } else {
@@ -131,12 +136,30 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
         Disposable disposable = RxBus.getInstance()
                 .listenKey()
                 .subscribe(item -> mImageAdapter.updateItem(item));
-        compositeDisposable.add(disposable);
+        favoriteDisposable.add(disposable);
+
+        Disposable disposableProgress = RxBus.getInstance()
+                .listenProgress()
+                .subscribe(progressEvent -> {
+                    if (mImageAdapter != null && mImageAdapter.getItemCount() > 0) {
+                        mImageAdapter.updateItem(progressEvent.getPosition(), progressEvent.getProgress());
+                    }
+                });
+        downloadDisposable.add(disposableProgress);
+    }
+
+    @Override
+    public void onPause() {
+        if (clickedViewId != R.id.photo_image) {
+            downloadDisposable.clear();
+        }
+        super.onPause();
     }
 
     @Override
     public void onDestroy() {
-        compositeDisposable.clear();
+        downloadDisposable.clear();
+        favoriteDisposable.clear();
         mMainViewModel.onStop();
         super.onDestroy();
     }
@@ -144,7 +167,7 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
     private void setUpLoadMoreListener() {
         bindingList.imageList.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
-            public void onScrolled(RecyclerView recyclerView,
+            public void onScrolled(@NonNull RecyclerView recyclerView,
                                    int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
 
@@ -169,7 +192,7 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
                     bindingList.fragmentListProgressBar.setVisibility(View.VISIBLE);
                     mMainViewModel.fetchPhotoList(20, page);
                 }).subscribe();
-        compositeDisposable.add(disposable);
+        downloadDisposable.add(disposable);
         paginator.onNext(pageNumber);
     }
 
@@ -204,6 +227,7 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
 
     @Override
     public void onItemClicked(View view, Image item, int position) {
+        clickedViewId = view.getId();
         switch (view.getId()) {
             case R.id.photo_image:
                 PhotoFullScreenHelper photoFullScreenHelper = new PhotoFullScreenHelper();
@@ -230,7 +254,6 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
                 });
                 break;
         }
-
     }
 }
 

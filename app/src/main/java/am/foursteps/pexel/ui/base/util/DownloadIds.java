@@ -1,11 +1,10 @@
 package am.foursteps.pexel.ui.base.util;
 
-import java.util.ArrayList;
-import java.util.List;
+import android.util.SparseIntArray;
 
 public final class DownloadIds {
     private static final DownloadIds ourInstance = new DownloadIds();
-    private List<Integer> downloadIds = new ArrayList<>();
+    private SparseIntArray downloadIds = new SparseIntArray();
 
     public static DownloadIds getInstance() {
         return ourInstance;
@@ -14,15 +13,19 @@ public final class DownloadIds {
     private DownloadIds() {
     }
 
-    public void removeDownloadIds(Integer downloadId) {
-        downloadIds.remove(downloadId);
+    public void removeDownloadIds(int position) {
+        downloadIds.delete(position);
     }
 
-    public void addDownloadId(Integer downloadId) {
-        downloadIds.add(downloadId);
+    public void addDownloadId(int position, Integer downloadId) {
+        downloadIds.put(position, downloadId);
     }
 
-    public List<Integer> getDownloadIds() {
+    public SparseIntArray getDownloadIds() {
         return downloadIds;
+    }
+
+    public int getDownloadId(int position) {
+        return downloadIds.get(position, -1);
     }
 }

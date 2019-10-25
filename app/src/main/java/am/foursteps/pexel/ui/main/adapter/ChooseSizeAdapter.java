@@ -20,7 +20,6 @@ public class ChooseSizeAdapter extends RecyclerView.Adapter<ChooseSizeAdapter.Ch
     private List<SizeData.Sizes> items;
     private OnRecyclerItemClickListener<SizeData.Sizes> onRecyclerItemClickListener;
 
-
     public ChooseSizeAdapter(OnRecyclerItemClickListener<SizeData.Sizes> onRecyclerItemClickListener) {
         this.onRecyclerItemClickListener = onRecyclerItemClickListener;
         items = new ArrayList<>();
@@ -44,14 +43,12 @@ public class ChooseSizeAdapter extends RecyclerView.Adapter<ChooseSizeAdapter.Ch
         holder.mBinding.itemChooseSize.setOnClickListener(view -> {
             onRecyclerItemClickListener.onItemClicked(holder.mBinding.itemChooseSize, items.get(position), position);
         });
-
     }
 
     public void setChooseSizeList(List<SizeData.Sizes> mChooseSizeList) {
         this.items = mChooseSizeList;
         this.notifyDataSetChanged();
     }
-
 
     public void update(int position, SizeData.Sizes chooseSizeItem) {
         this.items.set(position, chooseSizeItem);
@@ -60,7 +57,7 @@ public class ChooseSizeAdapter extends RecyclerView.Adapter<ChooseSizeAdapter.Ch
 
     @Override
     public int getItemCount() {
-        return 4;
+        return items.size();
     }
 
     static class ChooseSizeViewHolder extends RecyclerView.ViewHolder {

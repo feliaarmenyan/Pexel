@@ -13,8 +13,6 @@ import com.downloader.Error;
 import com.downloader.OnDownloadListener;
 import com.downloader.PRDownloader;
 import com.downloader.Status;
-import com.downloader.internal.DownloadRequestQueue;
-import com.downloader.request.DownloadRequest;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 import java.util.Date;
@@ -110,11 +108,13 @@ public class BottomSheetSizeHelper {
 
 
              downloadId = PRDownloader.download(uri.toString(),
-                     Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath(),
+                     Environment
+                             .getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+                             .getAbsolutePath() + "/" + "Pexel" + "/",
                      new Date() + ".jpg")
                     .build()
                     .setOnStartOrResumeListener(() -> {
-                        DownloadIds.getInstance().addDownloadId(downloadId);
+                        DownloadIds.getInstance().addDownloadId(position, downloadId);
                         Timber.e("stat downloading");
                     })
                     .setOnProgressListener(progress -> {
@@ -123,19 +123,37 @@ public class BottomSheetSizeHelper {
                         event.setPosition(position);
                         RxBus.getInstance().publishProgress(event);
                     })
+                     .setOnCancelListener(() -> {
+                         for (int i = 0; i < DownloadIds.getInstance().getDownloadIds().size(); i++) {
+                             int item = DownloadIds.getInstance().getDownloadIds().indexOfValue(i);
+                             Status status = PRDownloader.getStatus(item);
+                             if (status == COMPLETED || status == CANCELLED || status == FAILED || status == UNKNOWN) {
+                                 ProgressEvent event = new ProgressEvent();
+                                 event.setProgress(1f);
+                                 event.setPosition(position);
+                                 DownloadIds.getInstance().removeDownloadIds(position);
+                                 PRDownloader.cancel(item);
+                                 RxBus.getInstance().publishProgress(event);
+                                 Toast.makeText(context, "Canceled", Toast.LENGTH_SHORT).show();
+                             }
+                         }
+                     })
                     .start(new OnDownloadListener() {
-
                         @Override
                         public void onDownloadComplete() {
-                           for(Integer item: DownloadIds.getInstance().getDownloadIds()){
+                            for (int i = 0; i < DownloadIds.getInstance().getDownloadIds().size(); i++) {
+                                int item = DownloadIds.getInstance().getDownloadIds().indexOfValue(i);
                                Status status = PRDownloader.getStatus(item);
                                if(status == COMPLETED || status== CANCELLED || status==FAILED || status==UNKNOWN){
-                                   DownloadIds.getInstance().removeDownloadIds(item);
+                                   ProgressEvent event = new ProgressEvent();
+                                   event.setProgress(1f);
+                                   event.setPosition(position);
+                                   DownloadIds.getInstance().removeDownloadIds(position);
                                    PRDownloader.cancel((int)item);
+                                   RxBus.getInstance().publishProgress(event);
+                                   Toast.makeText(context, "Download", Toast.LENGTH_SHORT).show();
                                }
                            }
-//                            DownloadIds.getInstance().removeDownloadIds(downloadId);
-//                            Toast.makeText(context, "Download", Toast.LENGTH_SHORT).show();
                         }
 
                         @Override
@@ -143,7 +161,6 @@ public class BottomSheetSizeHelper {
                             Timber.e(error.getServerErrorMessage());
                         }
                     });
-
         });
     }
 }

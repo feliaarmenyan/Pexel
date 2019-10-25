@@ -71,9 +71,11 @@ public class ImageAdapter extends RecyclerBaseAdapter<Image> {
         if (!payloads.isEmpty() && payloads.get(0) != null) {
             Image image = (Image) payloads.get(payloads.size() - 1);
             ((ItemViewHolder) holder).bindFavoriteItemImage(image);
-            if (image.getDownloadProgress() >= 0) {
+//            if (image.getDownloadProgress() >= 0) {
                 ((ItemViewHolder) holder).bindImage(image, false);
-            }
+//            }else {
+
+//            }
         } else {
             super.onBindViewHolder(holder, position, payloads);
         }
