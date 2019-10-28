@@ -27,6 +27,7 @@ import org.modelmapper.ModelMapper;
 
 import javax.inject.Inject;
 
+import am.foursteps.pexel.AppConstants;
 import am.foursteps.pexel.R;
 import am.foursteps.pexel.data.local.entity.FavoritePhotoEntity;
 import am.foursteps.pexel.data.remote.model.Image;
@@ -90,8 +91,7 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
             mImageAdapter.clearItems();
             mSearchText = editable.toString();
             pageNumber = 0;
-            mMainViewModel.fetchSearchPhotoList(mSearchText, 20, pageNumber);
-
+            paginator.onNext(pageNumber);
         }
     };
 
@@ -141,7 +141,6 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
             mBinding.fragmentSearchRecyclerView.setLayoutManager(layoutManager);
             mBinding.fragmentSearchRecyclerView.setAdapter(mImageAdapter);
             setUpLoadMoreListener();
-
         }
         return mBinding.getRoot();
     }
@@ -150,17 +149,18 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ((MainActivity) requireActivity()).updateStatusBarColor("#034D59");
-
+        mBinding.fragmentListToolbarEditText.requestFocus();
+        InputMethodManager imm = (InputMethodManager) requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.showSoftInput(mBinding.fragmentListToolbarEditText, InputMethodManager.SHOW_IMPLICIT);
         mBinding.fragmentSearchSwipeRefresh.setOnRefreshListener(() -> {
             mImageAdapter.clearItems();
             pageNumber=0;
-            mMainViewModel.fetchSearchPhotoList(mSearchText, 20, pageNumber);
+            paginator.onNext(pageNumber);
         });
 
         mBinding.fragmentListToolbarEditTextBack.setOnClickListener(v -> {
             PRDownloader.cancelAll();
             mBinding.fragmentListToolbarEditText.getText().clear();
-            final InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
             requireActivity().onBackPressed();
         });
@@ -171,6 +171,8 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
         mMainViewModel = ViewModelProviders.of(this, viewModelFactory).get(MainViewModel.class);
 
         mMainViewModel.getSearchListLiveData().observe(this, apiResponseResource -> {
+            loading=false;
+            mBinding.fragmentSearchProgressBar.setVisibility(View.INVISIBLE);
             if (mBinding.fragmentSearchSwipeRefresh.isRefreshing()) {
                 mBinding.fragmentSearchSwipeRefresh.setRefreshing(false);
             }
@@ -227,11 +229,8 @@ public class SearchFragment extends Fragment implements OnRecyclerItemClickListe
                 .doOnNext(page -> {
                     loading = true;
                     mBinding.fragmentSearchProgressBar.setVisibility(View.VISIBLE);
-                    mMainViewModel.fetchSearchPhotoList(mSearchText, 20, page);
-                }).subscribe(items -> {
-                    loading = false;
-                    mBinding.fragmentSearchProgressBar.setVisibility(View.INVISIBLE);
-                });
+                    mMainViewModel.fetchSearchPhotoList(mSearchText, AppConstants.PER_PAGE, page);
+                }).subscribe();
         compositeDisposable.add(disposable);
         paginator.onNext(pageNumber);
     }

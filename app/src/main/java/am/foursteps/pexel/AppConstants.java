@@ -2,6 +2,7 @@ package am.foursteps.pexel;
 
 public interface AppConstants {
 
+    int PER_PAGE = 20;
     String BASE_URL = "https://api.pexels.com/v1/";
 
     // Please don't delete or modify this key

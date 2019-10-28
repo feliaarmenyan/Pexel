@@ -24,6 +24,7 @@ import org.modelmapper.ModelMapper;
 
 import javax.inject.Inject;
 
+import am.foursteps.pexel.AppConstants;
 import am.foursteps.pexel.R;
 import am.foursteps.pexel.data.local.def.AnimationType;
 import am.foursteps.pexel.data.local.entity.FavoritePhotoEntity;
@@ -48,6 +49,7 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
 
     private FragmentImageListBinding bindingList;
     private CompositeDisposable downloadDisposable = new CompositeDisposable();
+    private CompositeDisposable paginationDisposable = new CompositeDisposable();
     private CompositeDisposable favoriteDisposable = new CompositeDisposable();
     private PublishProcessor<Integer> paginator = PublishProcessor.create();
     private ImageAdapter mImageAdapter;
@@ -80,13 +82,12 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
         super.onCreate(savedInstanceState);
         if (bindingList == null) {
             bindingList = DataBindingUtil.inflate(inflater, R.layout.fragment_image_list, container, false);
-            subscribeForData();
             mImageAdapter = new ImageAdapter(this);
             layoutManager = new LinearLayoutManager(requireContext());
             bindingList.imageList.setLayoutManager(layoutManager);
             bindingList.imageList.setAdapter(mImageAdapter);
+            subscribeForData();
             setUpLoadMoreListener();
-            mMainViewModel.fetchPhotoList(20, pageNumber);
         }
         return bindingList.getRoot();
     }
@@ -96,10 +97,11 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
         super.onViewCreated(view, savedInstanceState);
         ((MainActivity) requireActivity()).updateStatusBarColor("#034D59");
 
+        bindingList.activityMainToolbarLogo.setOnClickListener(view1 -> bindingList.imageList.smoothScrollToPosition(0));
         bindingList.fragmentListSwipeRefresh.setOnRefreshListener(() -> {
             mImageAdapter.clearItems();
             pageNumber = 0;
-            mMainViewModel.fetchPhotoList(20, pageNumber);
+            paginator.onNext(pageNumber);
         });
 
         bindingList.fragmentListToolbarFavoriteIcon.setOnClickListener(v -> {
@@ -160,6 +162,7 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
     public void onDestroy() {
         downloadDisposable.clear();
         favoriteDisposable.clear();
+        paginationDisposable.clear();
         mMainViewModel.onStop();
         super.onDestroy();
     }
@@ -190,9 +193,9 @@ public class ListFragment extends Fragment implements OnRecyclerItemClickListene
                 .doOnNext(page -> {
                     loading = true;
                     bindingList.fragmentListProgressBar.setVisibility(View.VISIBLE);
-                    mMainViewModel.fetchPhotoList(20, page);
+                    mMainViewModel.fetchPhotoList(AppConstants.PER_PAGE, page);
                 }).subscribe();
-        downloadDisposable.add(disposable);
+        paginationDisposable.add(disposable);
         paginator.onNext(pageNumber);
     }
 

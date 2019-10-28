@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -120,6 +121,8 @@ public class FavoriteFragment extends Fragment implements OnRecyclerItemClickLis
 
     @Override
     public void onItemClicked(View view, Object item, int position) {
+        ImageView imageView;
+        imageView = view.findViewById(R.id.item_paging_favorite);
         clickedViewId = view.getId();
         switch (view.getId()) {
             case R.id.photo_image:
@@ -127,6 +130,8 @@ public class FavoriteFragment extends Fragment implements OnRecyclerItemClickLis
                 photoFullScreenHelper.fullScreen(requireFragmentManager(), view, ((FavoritePhotoEntity) item).getImageSrc());
                 break;
             case R.id.item_paging_favorite:
+//                if (imageView.isEnabled()) {
+//                    imageView.setEnabled(false);
                 int downloadId = DownloadIds.getInstance().getDownloadId(position);
                 if (downloadId != -1) {
                     PRDownloader.cancel(downloadId);
@@ -143,6 +148,7 @@ public class FavoriteFragment extends Fragment implements OnRecyclerItemClickLis
                     }
                 });
                 break;
+//        }
             case R.id.item_paging_share:
                 Intent sendIntent = new Intent();
                 sendIntent.setAction(Intent.ACTION_SEND);

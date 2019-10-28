@@ -1,6 +1,7 @@
 package am.foursteps.pexel.ui.base.util;
 
 import android.content.Context;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Environment;
 import android.view.LayoutInflater;
@@ -107,11 +108,11 @@ public class BottomSheetSizeHelper {
             Uri uri = Uri.parse(mImageSrc);
 
 
+            String name = new Date() + ".jpg";
              downloadId = PRDownloader.download(uri.toString(),
-                     Environment
-                             .getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-                             .getAbsolutePath() + "/" + "Pexel" + "/",
-                     new Date() + ".jpg")
+                     Environment.getExternalStorageDirectory() + "/" + Environment.DIRECTORY_DCIM + "/Pexel"
+                     ,
+                     name)
                     .build()
                     .setOnStartOrResumeListener(() -> {
                         DownloadIds.getInstance().addDownloadId(position, downloadId);
@@ -152,6 +153,11 @@ public class BottomSheetSizeHelper {
                                    PRDownloader.cancel((int)item);
                                    RxBus.getInstance().publishProgress(event);
                                    Toast.makeText(context, "Download", Toast.LENGTH_SHORT).show();
+
+                                   MediaScannerConnection.scanFile(context,
+                                           new String[]{Environment.getExternalStorageDirectory() + "/" + Environment.DIRECTORY_DCIM + "/Pexel/" + name},
+                                           null,
+                                           null);
                                }
                            }
                         }

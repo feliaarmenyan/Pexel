@@ -30,7 +30,7 @@ public class RequestInterceptor implements Interceptor {
             Request request = requestBuilder.build();
             response = chain.proceed(request);
             int remainingCount = Integer.parseInt(Objects.requireNonNull(response.header("x-ratelimit-remaining")));
-            if (remainingCount < 100) {
+            if (remainingCount < 500) {
                 remainingCountKeyA = 0;
             }
         } else if (remainingCountKeyB == -1) {
@@ -38,7 +38,7 @@ public class RequestInterceptor implements Interceptor {
             Request request = requestBuilder.build();
             response = chain.proceed(request);
             int remainingCount = Integer.parseInt(Objects.requireNonNull(response.header("x-ratelimit-remaining")));
-            if (remainingCount < 100) {
+            if (remainingCount < 500) {
                 remainingCountKeyB = 0;
             }
         } else if (remainingCountKeyC == -1) {
@@ -46,7 +46,7 @@ public class RequestInterceptor implements Interceptor {
             Request request = requestBuilder.build();
             response = chain.proceed(request);
             int remainingCount = Integer.parseInt(Objects.requireNonNull(response.header("x-ratelimit-remaining")));
-            if (remainingCount < 100) {
+            if (remainingCount < 500) {
                 remainingCountKeyC = 0;
             }
         } else {
@@ -54,7 +54,7 @@ public class RequestInterceptor implements Interceptor {
             Request request = requestBuilder.build();
             response = chain.proceed(request);
             int remainingCount = Integer.parseInt(Objects.requireNonNull(response.header("x-ratelimit-remaining")));
-            if (remainingCount < 100) {
+            if (remainingCount < 500) {
                 remainingCountKeyD = 0;
                 remainingCountKeyA = -1;
                 remainingCountKeyB = -1;
