@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity implements HasSupportFragmen
         ActivityUtil.pushFragment(new ListFragment(), getSupportFragmentManager(), R.id.main_content, false, AnimationType.NONE);
     }
 
-    public void updateStatusBarColor(String color) {// Color must be in hexadecimal fromat
+    public void updateStatusBarColor(String color) {
         Window window = getWindow();
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         window.setStatusBarColor(Color.parseColor(color));

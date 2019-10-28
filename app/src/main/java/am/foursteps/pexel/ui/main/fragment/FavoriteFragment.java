@@ -121,8 +121,6 @@ public class FavoriteFragment extends Fragment implements OnRecyclerItemClickLis
 
     @Override
     public void onItemClicked(View view, Object item, int position) {
-        ImageView imageView;
-        imageView = view.findViewById(R.id.item_paging_favorite);
         clickedViewId = view.getId();
         switch (view.getId()) {
             case R.id.photo_image:
@@ -130,8 +128,6 @@ public class FavoriteFragment extends Fragment implements OnRecyclerItemClickLis
                 photoFullScreenHelper.fullScreen(requireFragmentManager(), view, ((FavoritePhotoEntity) item).getImageSrc());
                 break;
             case R.id.item_paging_favorite:
-//                if (imageView.isEnabled()) {
-//                    imageView.setEnabled(false);
                 int downloadId = DownloadIds.getInstance().getDownloadId(position);
                 if (downloadId != -1) {
                     PRDownloader.cancel(downloadId);
