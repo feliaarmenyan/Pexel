@@ -71,6 +71,7 @@
                         android:layout_gravity="center"
                         android:layout_weight="1"
                         android:padding="8dp"
+                        android:imeOptions="actionDone"
                         android:background="@null"
                         android:hint="@string/search"
                         android:singleLine="true"

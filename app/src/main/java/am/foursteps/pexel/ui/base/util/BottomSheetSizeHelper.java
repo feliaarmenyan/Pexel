@@ -110,8 +110,7 @@ public class BottomSheetSizeHelper {
 
             String name = new Date() + ".jpg";
              downloadId = PRDownloader.download(uri.toString(),
-                     Environment.getExternalStorageDirectory() + "/" + Environment.DIRECTORY_DCIM + "/Pexel"
-                     ,
+                     Environment.getExternalStorageDirectory() + "/" + Environment.DIRECTORY_DCIM + "/PixTop/",
                      name)
                     .build()
                     .setOnStartOrResumeListener(() -> {
@@ -155,7 +154,7 @@ public class BottomSheetSizeHelper {
                                    Toast.makeText(context, "Download", Toast.LENGTH_SHORT).show();
 
                                    MediaScannerConnection.scanFile(context,
-                                           new String[]{Environment.getExternalStorageDirectory() + "/" + Environment.DIRECTORY_DCIM + "/Pexel/" + name},
+                                           new String[]{Environment.getExternalStorageDirectory() + "/" + Environment.DIRECTORY_DCIM + "/PixTop/" + name},
                                            null,
                                            null);
                                }
